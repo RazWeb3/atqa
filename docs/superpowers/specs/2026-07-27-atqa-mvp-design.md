@@ -150,7 +150,7 @@
 - 連続再生の開始・停止
 - 現在のユニットをAI検査
 - 問題位置から再生
-- 要確認結果を正常として扱う
+- 要確認結果を人が確認済みにする
 - 失敗したユニットを再試行
 
 ### 7.4 アクセシビリティ
@@ -430,17 +430,24 @@ Geminiは正解読みを決めない。辞書由来の期待読みを上書き�
 type ReviewStatus = "pass" | "review" | "inconclusive";
 ```
 
+判定は次の順序で評価し、先に一致した条件を採用する。
+
 |条件|状態|
 |---|---|
-|機械差分なし、かつ有効なSTT結果あり|正常|
-|機械差分あり、Geminiも不一致を支持|要確認|
-|機械差分あり、Geminiが一致を支持|判定不能（ASRとGeminiが不一致）|
+|音声取得失敗|判定不能|
 |期待読み未定義|判定不能|
 |STT低信頼度または結果なし|判定不能|
 |Gemini出力不正またはAPI失敗|判定不能|
-|音声取得失敗|判定不能|
+|機械差分なし、Geminiも一致を支持|正常|
+|機械差分あり、Geminiも不一致を支持|要確認|
+|機械差分なし、Geminiが時間・聞こえた読み付きで不一致を支持|要確認|
+|機械差分あり、Geminiが一致を支持|判定不能（ASRとGeminiが不一致）|
 
-正常系をAIの単独判断だけで確定しない。
+正常系はSTT由来の機械比較とGeminiの両方が一致した場合だけ確定する。Gemini単独で正常へ変更しない。一方、STTが表記を自動補正して差分を失う可能性があるため、Geminiが聞こえた読みと時間を伴って不一致を示した場合は要確認にできる。
+
+### 13.5 人による解決
+
+ユーザーは要確認結果を「確認済み」にできる。この操作はAIの `ReviewStatus` を `pass` に変更しない。セッション内に人の確認結果を別フィールドとして保持し、モデル判定と人の判断を混同しない。
 
 ## 14. 問題モデル
 
@@ -599,6 +606,7 @@ type AppState = {
   units: PlaybackUnit[];
   playback: PlaybackState;
   reviews: Record<string, ReviewResponse>;
+  humanResolutions: Record<string, "confirmed_issue" | "dismissed_issue">;
   selectedUnitId: string | null;
 };
 ```
@@ -606,6 +614,7 @@ type AppState = {
 - ページ再読込で状態は消える。
 - 音声検査結果は `unitId` 単位で保持する。
 - 同一ユニットの再検査時は最新結果へ置換する。
+- 人の確認結果はAI判定と別に保持する。
 - 連続再生状態とQA実行状態を分離し、検査失敗がプレイヤー全体を壊さないようにする。
 
 ## 20. 自動テスト
@@ -759,4 +768,3 @@ AIチャットを追加するのではなく、AIがコンテンツ構造を理�
 - [Google Cloud Speech-to-Text RecognitionConfig](https://docs.cloud.google.com/speech-to-text/docs/v1/reference/rest/v1/RecognitionConfig?hl=ja)
 - [Cloud Speech-to-Text word timestamps](https://docs.cloud.google.com/speech-to-text/docs/v1/async-time-offsets?hl=ja)
 - [Gemini Audio Understanding](https://ai.google.dev/gemini-api/docs/audio?hl=en)
-
