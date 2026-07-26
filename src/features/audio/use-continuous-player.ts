@@ -24,6 +24,11 @@ export function useContinuousPlayer(
 ): ContinuousPlayer {
   const [state, dispatch] = useReducer(playbackReducer, initialPlaybackState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Set when a unit ends during continuous playback so the next unit
+  // starts automatically once its audio is loaded.
+  const autoplayNextRef = useRef(false);
+  const continuousRef = useRef(initialPlaybackState.continuous);
+  continuousRef.current = state.continuous;
 
   // Initialize audio element
   useEffect(() => {
@@ -39,6 +44,7 @@ export function useContinuousPlayer(
     };
 
     const handleEnded = () => {
+      autoplayNextRef.current = continuousRef.current;
       dispatch({ type: "ENDED", unitCount: units.length });
     };
 
@@ -76,6 +82,23 @@ export function useContinuousPlayer(
         const proxyUrl = `/api/audio?url=${encodeURIComponent(unit.audioUrl)}`;
         audio.src = proxyUrl;
         audio.load();
+
+        if (autoplayNextRef.current) {
+          autoplayNextRef.current = false;
+          const handleCanPlay = () => {
+            audio.removeEventListener("canplay", handleCanPlay);
+            audio
+              .play()
+              .then(() => dispatch({ type: "PLAY" }))
+              .catch(() =>
+                dispatch({
+                  type: "AUDIO_ERROR",
+                  message: "再生を開始できませんでした",
+                }),
+              );
+          };
+          audio.addEventListener("canplay", handleCanPlay);
+        }
       }
     }
   }, [state.status, state.unitIndex, units]);
@@ -118,14 +141,17 @@ export function useContinuousPlayer(
   }, []);
 
   const previous = useCallback(() => {
+    autoplayNextRef.current = false;
     dispatch({ type: "PREVIOUS", unitCount: units.length });
   }, [units.length]);
 
   const next = useCallback(() => {
+    autoplayNextRef.current = false;
     dispatch({ type: "NEXT", unitCount: units.length });
   }, [units.length]);
 
   const select = useCallback((index: number) => {
+    autoplayNextRef.current = false;
     dispatch({ type: "SELECT_UNIT", index });
   }, []);
 

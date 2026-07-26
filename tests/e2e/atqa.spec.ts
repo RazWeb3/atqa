@@ -174,24 +174,25 @@ test.describe("ATQA E2E Journey", () => {
       }
     });
 
-    // Intercept audio API with silent WAV
+    // Intercept audio API with a 1-second silent WAV so playback lasts
     await page.route("**/api/audio**", async (route) => {
-      // Generate a minimal silent WAV file (44 bytes header + minimal data)
-      const silentWav = Buffer.from([
-        0x52, 0x49, 0x46, 0x46, // RIFF
-        0x24, 0x00, 0x00, 0x00, // file size - 8
-        0x57, 0x41, 0x56, 0x45, // WAVE
-        0x66, 0x6d, 0x74, 0x20, // fmt
-        0x10, 0x00, 0x00, 0x00, // chunk size
-        0x01, 0x00,             // PCM
-        0x01, 0x00,             // mono
-        0x44, 0xac, 0x00, 0x00, // 44100 Hz
-        0x88, 0x58, 0x01, 0x00, // byte rate
-        0x02, 0x00,             // block align
-        0x10, 0x00,             // bits per sample
-        0x64, 0x61, 0x74, 0x61, // data
-        0x00, 0x00, 0x00, 0x00, // data size
-      ]);
+      const sampleRate = 44100;
+      const dataSize = sampleRate * 2; // 1 second, 16-bit mono silence
+      const header = Buffer.alloc(44);
+      header.write("RIFF", 0);
+      header.writeUInt32LE(36 + dataSize, 4);
+      header.write("WAVE", 8);
+      header.write("fmt ", 12);
+      header.writeUInt32LE(16, 16);
+      header.writeUInt16LE(1, 20); // PCM
+      header.writeUInt16LE(1, 22); // mono
+      header.writeUInt32LE(sampleRate, 24);
+      header.writeUInt32LE(sampleRate * 2, 28); // byte rate
+      header.writeUInt16LE(2, 32); // block align
+      header.writeUInt16LE(16, 34); // bits per sample
+      header.write("data", 36);
+      header.writeUInt32LE(dataSize, 40);
+      const silentWav = Buffer.concat([header, Buffer.alloc(dataSize)]);
 
       await route.fulfill({
         status: 200,
@@ -231,7 +232,7 @@ test.describe("ATQA E2E Journey", () => {
     await expect(page.getByText("ITパスポートの学習では")).toBeVisible();
 
     // Step 4: Start and pause playback
-    const playButton = page.getByRole("button", { name: "再生" });
+    const playButton = page.getByRole("button", { name: "再生", exact: true });
     await playButton.click();
     await page.waitForTimeout(500);
     const pauseButton = page.getByRole("button", { name: "一時停止" });
@@ -242,7 +243,9 @@ test.describe("ATQA E2E Journey", () => {
     await reviewButton.click();
 
     // Step 6: See expected アイティー and heard イット
-    await expect(page.getByText("要確認")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("review-status")).toHaveText("要確認", {
+      timeout: 10000,
+    });
     await expect(page.getByText("あいてぃー")).toBeVisible();
     await expect(page.getByText("いっと")).toBeVisible();
 
@@ -280,7 +283,9 @@ test.describe("ATQA E2E Journey", () => {
 
     // Check first question group shows correct kinds
     // First unit should be "question" kind
-    await expect(page.getByText("ITプロジェクトの特性として")).toBeVisible();
+    await expect(page.locator("p.unit-text")).toContainText(
+      "ITプロジェクトの特性として",
+    );
   });
 
   test("inconclusive review never shows pass style", async ({ page }) => {
@@ -309,7 +314,9 @@ test.describe("ATQA E2E Journey", () => {
     await page.getByRole("button", { name: "この音声をAI検査" }).click();
 
     // Should show inconclusive, not pass
-    await expect(page.getByText("判定不能")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("review-status")).toHaveText("判定不能", {
+      timeout: 10000,
+    });
     await expect(page.getByText("正常")).not.toBeVisible();
   });
 
@@ -337,7 +344,9 @@ test.describe("ATQA E2E Journey", () => {
 
     // Run review
     await page.getByRole("button", { name: "この音声をAI検査" }).click();
-    await expect(page.getByText("要確認")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("review-status")).toHaveText("要確認", {
+      timeout: 10000,
+    });
 
     // Mark as resolved
     await page.getByRole("button", { name: "確認済みにする" }).click();
@@ -375,14 +384,19 @@ test.describe("ATQA E2E Journey", () => {
 
     await expect(page.getByText(/42ユニット/)).toBeVisible({ timeout: 10000 });
 
-    // Click review button multiple times rapidly
+    // Click review button multiple times rapidly.
+    // While pending, the button label changes to 検査中... and it is disabled,
+    // so target the stable class locator for the forced duplicate clicks.
     const reviewButton = page.getByRole("button", { name: "この音声をAI検査" });
     await reviewButton.click();
-    await reviewButton.click({ force: true }); // Button should be disabled
-    await reviewButton.click({ force: true });
+    const pendingButton = page.locator(".btn-review");
+    await pendingButton.click({ force: true }); // Button should be disabled
+    await pendingButton.click({ force: true });
 
     // Wait for response
-    await expect(page.getByText("正常")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("review-status")).toHaveText("正常", {
+      timeout: 10000,
+    });
 
     // Only one request should have been made
     expect(requestCount).toBe(1);
