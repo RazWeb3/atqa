@@ -1,0 +1,720 @@
+{
+  "id": "cnt_938dda303d_quiz_range_01",
+  "type": "quiz",
+  "schemaVersion": 1,
+  "title": "ITパスポートマネジメント系 理解チェック1（1〜3章: ITプロジェクトの全体像・マネジメントの基礎）",
+  "description": "ITパスポート試験のマネジメント系分野から、ITプロジェクトの全体像、マネジメントの基礎、そしてリスク管理に関する重要用語と概念をチェックするクイズです。全30問で理解度を確認しましょう。",
+  "language": "ja",
+  "choiceLanguageMode": "pack",
+  "author": "Sokqa Team",
+  "assetBaseUrl": "https://cdn.convly.jp/sokqa/creators/sokqa_official/packs/cnt_938dda303d",
+  "globalTags": [
+    "ITパスポート",
+    "ITパスポートマネジメント系",
+    "マネジメント系"
+  ],
+  "questions": [
+    {
+      "id": "q-1",
+      "question": "ITプロジェクトの特性として、最も適切なものはどれですか。",
+      "choices": [
+        "繰り返し行われる定常業務の一部です。",
+        "特定の目標達成のため計画され、一時的に実行される活動です。",
+        "明確な終了時期がなく、継続的に改善される活動です。",
+        "主に既存システムの保守・運用に特化した活動です。"
+      ],
+      "answerIndex": 1,
+      "explanation": "ITプロジェクトは、特定の目標を達成するために計画され、明確な開始と終了を持つ一時的な活動です。定常業務とは異なり、独自の成果物を生み出します。",
+      "tts": {
+        "questionText": "アイティープロジェクトの特性として、最も適切なものはどれですか。",
+        "explanationText": "アイティープロジェクトは、特定の目標を達成するために計画され、明確な開始と終了を持つ一時的な活動です。定常業務とは異なり、独自の成果物を生み出します。",
+        "questionAudioPath": "objects/audio/av_20260721_230212_cnt_938dda303d_quiz_range_01__q_q-1_question_64bf1aa2.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230213_cnt_938dda303d_quiz_range_01__q_q-1_choice_0_967e6cea.mp3",
+          "objects/audio/av_20260721_230214_cnt_938dda303d_quiz_range_01__q_q-1_choice_1_02cdff08.mp3",
+          "objects/audio/av_20260721_230215_cnt_938dda303d_quiz_range_01__q_q-1_choice_2_04987692.mp3",
+          "objects/audio/av_20260721_230216_cnt_938dda303d_quiz_range_01__q_q-1_choice_3_64bc72cd.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230217_cnt_938dda303d_quiz_range_01__q_q-1_explanation_eea37931.mp3"
+      }
+    },
+    {
+      "id": "q-2",
+      "question": "プロジェクトと定常業務の主な違いは何ですか。",
+      "choices": [
+        "プロジェクトは常に複数の部門が関与しますが、定常業務は単一部門で行われます。",
+        "プロジェクトは予算が厳しく管理されますが、定常業務は予算管理が不要です。",
+        "プロジェクトは目標達成後に完了しますが、定常業務は繰り返し行われます。",
+        "プロジェクトは失敗が許されませんが、定常業務は失敗しても影響が少ないです。"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクトは明確な開始と終了を持ち、目標が達成されるか不可能になった時点で完了する一時的な活動です。一方、定常業務は繰り返し行われる日常的な活動を指します。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230218_cnt_938dda303d_quiz_range_01__q_q-2_question_a1252616.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230219_cnt_938dda303d_quiz_range_01__q_q-2_choice_0_f87ba2c7.mp3",
+          "objects/audio/av_20260721_230220_cnt_938dda303d_quiz_range_01__q_q-2_choice_1_43f5be67.mp3",
+          "objects/audio/av_20260721_230221_cnt_938dda303d_quiz_range_01__q_q-2_choice_2_2475dc8d.mp3",
+          "objects/audio/av_20260721_230222_cnt_938dda303d_quiz_range_01__q_q-2_choice_3_14717ec9.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230223_cnt_938dda303d_quiz_range_01__q_q-2_explanation_cc9d3da2.mp3"
+      }
+    },
+    {
+      "id": "q-3",
+      "question": "ITプロジェクトが特に不確実性が高く複雑な要素を含む主な理由は何ですか。",
+      "choices": [
+        "技術の進歩が速く、要件が途中で変化しやすいためです。",
+        "必ず新しい技術を導入する必要があるためです。",
+        "関わる人間の数が常に多く、意見がまとまりにくいためです。",
+        "外部からの資金調達が常に困難であるためです。"
+      ],
+      "answerIndex": 0,
+      "explanation": "ITプロジェクトは、技術の進歩が非常に速く、開発途中で要件が変化する可能性が高いため、不確実性が高く複雑な要素を多く含みます。",
+      "tts": {
+        "questionText": "アイティープロジェクトが特に不確実性が高く複雑な要素を含む主な理由は何ですか。",
+        "explanationText": "アイティープロジェクトは、技術の進歩が非常に速く、開発途中で要件が変化する可能性が高いため、不確実性が高く複雑な要素を多く含みます。",
+        "questionAudioPath": "objects/audio/av_20260721_230224_cnt_938dda303d_quiz_range_01__q_q-3_question_08c23e7c.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230225_cnt_938dda303d_quiz_range_01__q_q-3_choice_0_d6771406.mp3",
+          "objects/audio/av_20260721_230226_cnt_938dda303d_quiz_range_01__q_q-3_choice_1_e05eb5e4.mp3",
+          "objects/audio/av_20260721_230227_cnt_938dda303d_quiz_range_01__q_q-3_choice_2_cd679d13.mp3",
+          "objects/audio/av_20260721_230228_cnt_938dda303d_quiz_range_01__q_q-3_choice_3_60244802.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230229_cnt_938dda303d_quiz_range_01__q_q-3_explanation_9e3d87c9.mp3"
+      }
+    },
+    {
+      "id": "q-4",
+      "question": "プロジェクトを成功させるために、計画段階で最も重要とされることは何ですか。",
+      "choices": [
+        "予算を最大限に確保し、どんな要求にも対応できる体制を整えることです。",
+        "最新の技術のみを採用し、競合他社との差別化を図ることです。",
+        "目標を明確にし、その達成に向けた計画を綿密に立てることです。",
+        "プロジェクトチームのメンバーを頻繁に入れ替えることで、多様な視点を取り入れることです。"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクト成功の鍵は、目標を明確に設定し、その目標達成に向けた綿密な計画を立てることです。これにより、プロジェクトの方向性が定まり、効率的な進行が可能になります。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230230_cnt_938dda303d_quiz_range_01__q_q-4_question_799109c5.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230231_cnt_938dda303d_quiz_range_01__q_q-4_choice_0_67980873.mp3",
+          "objects/audio/av_20260721_230232_cnt_938dda303d_quiz_range_01__q_q-4_choice_1_41c4140a.mp3",
+          "objects/audio/av_20260721_230233_cnt_938dda303d_quiz_range_01__q_q-4_choice_2_a8af7815.mp3",
+          "objects/audio/av_20260721_230234_cnt_938dda303d_quiz_range_01__q_q-4_choice_3_e65b9c39.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230235_cnt_938dda303d_quiz_range_01__q_q-4_explanation_3d9750ee.mp3"
+      }
+    },
+    {
+      "id": "q-5",
+      "question": "プロジェクトの制約として知られるQCDの3要素で構成されるものとして正しい組み合わせはどれですか。",
+      "choices": [
+        "機能（Function）、費用（Cost）、展開（Deployment）",
+        "迅速性（Quickness）、顧客（Customer）、設計（Design）",
+        "品質（Quality）、費用（Cost）、納期（Delivery）",
+        "目標（Goal）、協力（Cooperation）、決定（Decision）"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクトの制約は、品質（Quality）、費用（Cost）、納期（Delivery）の3つの要素、すなわちQCDとして管理されます。",
+      "tts": {
+        "questionText": "プロジェクトの制約として知られるキューシーディーの3要素で構成されるものとして正しい組み合わせはどれですか。",
+        "choiceTexts": [
+          "機能（ファンクション）、費用（コスト）、展開（デプロイメント）",
+          "迅速性（クイックネス）、顧客（カスタマー）、設計（デザイン）",
+          "品質（クオリティ）、費用（コスト）、納期（デリバリー）",
+          "目標（ゴール）、協力（コーポレーション）、決定（ディシジョン）"
+        ],
+        "explanationText": "プロジェクトの制約は、品質（クオリティ）、費用（コスト）、納期（デリバリー）の3つの要素、すなわちキューシーディーとして管理されます。",
+        "questionAudioPath": "objects/audio/av_20260721_230236_cnt_938dda303d_quiz_range_01__q_q-5_question_eb0d8a20.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230237_cnt_938dda303d_quiz_range_01__q_q-5_choice_0_2d904b06.mp3",
+          "objects/audio/av_20260721_230238_cnt_938dda303d_quiz_range_01__q_q-5_choice_1_6254d274.mp3",
+          "objects/audio/av_20260721_230239_cnt_938dda303d_quiz_range_01__q_q-5_choice_2_80fc9698.mp3",
+          "objects/audio/av_20260721_230240_cnt_938dda303d_quiz_range_01__q_q-5_choice_3_31dc86b3.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230241_cnt_938dda303d_quiz_range_01__q_q-5_explanation_4c98c7d0.mp3"
+      }
+    },
+    {
+      "id": "q-6",
+      "question": "プロジェクトのQCD（品質、費用、納期）の関係性について、最も適切な説明はどれですか。",
+      "choices": [
+        "品質は費用と納期とは独立しており、それぞれ個別に管理できます。",
+        "これら3つの要素は密接に関連し合い、一つを変更すると他の要素にも影響が出ます。",
+        "費用を削減しても、品質や納期には一切影響が出ません。",
+        "納期を短縮することは、常に品質向上と費用削減につながります。"
+      ],
+      "answerIndex": 1,
+      "explanation": "QCDの各要素は密接に連携しており、例えば費用を削減しようとすれば品質や納期に影響が出る可能性があり、納期を短縮すれば費用増加や品質低下のリスクがあります。これらのバランスを適切に管理することが重要です。",
+      "tts": {
+        "questionText": "プロジェクトのキューシーディー（品質、費用、納期）の関係性について、最も適切な説明はどれですか。",
+        "explanationText": "キューシーディーの各要素は密接に連携しており、例えば費用を削減しようとすれば品質や納期に影響が出る可能性があり、納期を短縮すれば費用増加や品質低下のリスクがあります。これらのバランスを適切に管理することが重要です。",
+        "questionAudioPath": "objects/audio/av_20260721_230242_cnt_938dda303d_quiz_range_01__q_q-6_question_b3012474.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230243_cnt_938dda303d_quiz_range_01__q_q-6_choice_0_e51ff8a3.mp3",
+          "objects/audio/av_20260721_230244_cnt_938dda303d_quiz_range_01__q_q-6_choice_1_689d4876.mp3",
+          "objects/audio/av_20260721_230245_cnt_938dda303d_quiz_range_01__q_q-6_choice_2_94babea6.mp3",
+          "objects/audio/av_20260721_230246_cnt_938dda303d_quiz_range_01__q_q-6_choice_3_6232994e.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230247_cnt_938dda303d_quiz_range_01__q_q-6_explanation_7cdaea12.mp3"
+      }
+    },
+    {
+      "id": "q-7",
+      "question": "プロジェクトマネジメントの定義として、最も適切なものはどれですか。",
+      "choices": [
+        "特定の目標を達成するために、限られた資源や期間内で活動を計画し、実行し、管理する一連のプロセスです。",
+        "既存システムの保守と改善を効率的に実施するための手法です。",
+        "企業全体の戦略立案と組織運営を継続的に行う活動です。",
+        "製品やサービスの品質を検査し、問題点を発見するための専門的な活動です。"
+      ],
+      "answerIndex": 0,
+      "explanation": "プロジェクトマネジメントは、特定の目標を達成するため、限られた資源と期間の中で、活動を計画し、実行し、管理する一連のプロセスを指します。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230248_cnt_938dda303d_quiz_range_01__q_q-7_question_21bb9c14.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230249_cnt_938dda303d_quiz_range_01__q_q-7_choice_0_265a24ac.mp3",
+          "objects/audio/av_20260721_230250_cnt_938dda303d_quiz_range_01__q_q-7_choice_1_d68db90d.mp3",
+          "objects/audio/av_20260721_230251_cnt_938dda303d_quiz_range_01__q_q-7_choice_2_83f368af.mp3",
+          "objects/audio/av_20260721_230252_cnt_938dda303d_quiz_range_01__q_q-7_choice_3_0b25c2af.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230253_cnt_938dda303d_quiz_range_01__q_q-7_explanation_9e533267.mp3"
+      }
+    },
+    {
+      "id": "q-8",
+      "question": "プロジェクトマネジメントにおいて計画フェーズが非常に重要である主な理由は何ですか。",
+      "choices": [
+        "計画フェーズに時間をかけるほど、プロジェクトの費用が必ず削減できるためです。",
+        "この段階で目標を明確にし、達成への道筋を具体的に描くことで、後続の実行フェーズでの混乱を避けられるためです。",
+        "計画フェーズのみでプロジェクトの成否が完全に決定されるためです。",
+        "計画フェーズを完了すれば、その後の実行フェーズで一切の変更が不要になるためです。"
+      ],
+      "answerIndex": 1,
+      "explanation": "計画フェーズは、目標を明確にし、達成への具体的な道筋を設定する重要な段階です。これにより、実行フェーズでの混乱や手戻りを最小限に抑え、プロジェクトをスムーズに進めることができます。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230254_cnt_938dda303d_quiz_range_01__q_q-8_question_a9d89541.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230255_cnt_938dda303d_quiz_range_01__q_q-8_choice_0_b41b0cf7.mp3",
+          "objects/audio/av_20260721_230256_cnt_938dda303d_quiz_range_01__q_q-8_choice_1_fb8e25ef.mp3",
+          "objects/audio/av_20260721_230257_cnt_938dda303d_quiz_range_01__q_q-8_choice_2_c5b86e11.mp3",
+          "objects/audio/av_20260721_230258_cnt_938dda303d_quiz_range_01__q_q-8_choice_3_fcef7149.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230259_cnt_938dda303d_quiz_range_01__q_q-8_explanation_a17c3cec.mp3"
+      }
+    },
+    {
+      "id": "q-9",
+      "question": "プロジェクトの計画フェーズで具体的な方針を定める四つの主要な管理領域は何ですか。",
+      "choices": [
+        "顧客、競合、供給者、社内リソース",
+        "人員、設備、資材、情報",
+        "スコープ、スケジュール、コスト、品質",
+        "分析、設計、開発、テスト"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクトの計画フェーズでは、スコープ（作業範囲）、スケジュール（期間）、コスト（費用）、品質（成果物の質）という四つの主要な管理領域について具体的な方針を定めます。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230300_cnt_938dda303d_quiz_range_01__q_q-9_question_86852923.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230301_cnt_938dda303d_quiz_range_01__q_q-9_choice_0_1c423426.mp3",
+          "objects/audio/av_20260721_230302_cnt_938dda303d_quiz_range_01__q_q-9_choice_1_6820a451.mp3",
+          "objects/audio/av_20260721_230303_cnt_938dda303d_quiz_range_01__q_q-9_choice_2_f33cf798.mp3",
+          "objects/audio/av_20260721_230304_cnt_938dda303d_quiz_range_01__q_q-9_choice_3_59168db6.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230305_cnt_938dda303d_quiz_range_01__q_q-9_explanation_375f329a.mp3"
+      }
+    },
+    {
+      "id": "q-10",
+      "question": "プロジェクトのスコープ（作業範囲）が曖昧なまま計画が進んだ場合、どのような問題が発生する可能性が最も高いですか。",
+      "choices": [
+        "プロジェクトチームのモチベーションが向上し、生産性が高まります。",
+        "顧客とのコミュニケーションが減り、効率的な進行が可能になります。",
+        "プロジェクトの目標達成が早まり、品質が向上します。",
+        "後から作業範囲が拡大し、スケジュール遅延やコスト超過を招く可能性があります。"
+      ],
+      "answerIndex": 3,
+      "explanation": "スコープが曖昧なままだと、プロジェクトの途中で作業範囲が予期せず拡大し、その結果、スケジュール遅延やコスト超過といった問題が発生する可能性が高まります。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230306_cnt_938dda303d_quiz_range_01__q_q-10_question_9e0112db.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230307_cnt_938dda303d_quiz_range_01__q_q-10_choice_0_9a2d78ee.mp3",
+          "objects/audio/av_20260721_230308_cnt_938dda303d_quiz_range_01__q_q-10_choice_1_2a1b2300.mp3",
+          "objects/audio/av_20260721_230309_cnt_938dda303d_quiz_range_01__q_q-10_choice_2_d43dbb1b.mp3",
+          "objects/audio/av_20260721_230310_cnt_938dda303d_quiz_range_01__q_q-10_choice_3_490cd2d9.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230311_cnt_938dda303d_quiz_range_01__q_q-10_explanation_9339d95d.mp3"
+      }
+    },
+    {
+      "id": "q-11",
+      "question": "プロジェクトのスケジュール見積もりが甘かった場合に起こりやすい問題は何ですか。",
+      "choices": [
+        "プロジェクトの品質が向上する可能性があります。",
+        "コストが削減される可能性が高まります。",
+        "プロジェクトチーム内の協力体制が強化されます。",
+        "納期に間に合わない事態が発生する可能性が高まります。"
+      ],
+      "answerIndex": 3,
+      "explanation": "スケジュール見積もりが甘いと、計画された期間内に作業が完了せず、結果として納期に間に合わないという重大な問題を引き起こす可能性が高まります。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230312_cnt_938dda303d_quiz_range_01__q_q-11_question_9c19a683.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230313_cnt_938dda303d_quiz_range_01__q_q-11_choice_0_bbf0bfec.mp3",
+          "objects/audio/av_20260721_230314_cnt_938dda303d_quiz_range_01__q_q-11_choice_1_9461ff5d.mp3",
+          "objects/audio/av_20260721_230315_cnt_938dda303d_quiz_range_01__q_q-11_choice_2_9b739c36.mp3",
+          "objects/audio/av_20260721_230316_cnt_938dda303d_quiz_range_01__q_q-11_choice_3_b7f6c7fd.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230317_cnt_938dda303d_quiz_range_01__q_q-11_explanation_ca4394eb.mp3"
+      }
+    },
+    {
+      "id": "q-12",
+      "question": "プロジェクト管理における「リスク」の定義として、最も適切なものはどれですか。",
+      "choices": [
+        "プロジェクトの失敗につながる確定的な問題のみを指します。",
+        "プロジェクトチームが完全にコントロールできる範囲内の問題だけを指します。",
+        "プロジェクトの目標達成に影響を与える可能性のある不確実な事象であり、脅威だけでなく好機も含まれます。",
+        "主に技術的な不具合や障害のみを指し、人的要因は含みません。"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクト管理におけるリスクとは、プロジェクトの目標達成に影響を与える可能性のある不確実な事象です。これには、プロジェクトに悪影響を及ぼす「脅威」だけでなく、良い結果をもたらす「好機」となる可能性も含まれます。",
+      "tts": {
+        "explanationText": "プロジェクト管理におけるリスクとは、プロジェクトの目標達成に影響を与える可能性のある不確実な事象であり、脅威だけでなく好機も含まれます。",
+        "questionAudioPath": "objects/audio/av_20260721_230318_cnt_938dda303d_quiz_range_01__q_q-12_question_d5eb55b3.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230319_cnt_938dda303d_quiz_range_01__q_q-12_choice_0_803d6b31.mp3",
+          "objects/audio/av_20260721_230320_cnt_938dda303d_quiz_range_01__q_q-12_choice_1_580dda31.mp3",
+          "objects/audio/av_20260721_230321_cnt_938dda303d_quiz_range_01__q_q-12_choice_2_138174ce.mp3",
+          "objects/audio/av_20260721_230322_cnt_938dda303d_quiz_range_01__q_q-12_choice_3_2b72e98e.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230323_cnt_938dda303d_quiz_range_01__q_q-12_explanation_15fe1fa8.mp3"
+      }
+    },
+    {
+      "id": "q-13",
+      "question": "プロジェクトにおけるリスクマネジメントが不可欠な理由として、最も適切なものはどれですか。",
+      "choices": [
+        "プロジェクトの進行中に発生するすべての問題を未然に防ぐことができるためです。",
+        "プロジェクトの費用を削減するためだけに実施される活動だからです。",
+        "リスクを早期に特定し適切に対応することで、プロジェクトを成功に導き、遅延やコスト超過、品質低下を回避できるためです。",
+        "プロジェクトチームの責任を軽減し、問題発生時の罰則を回避するためです。"
+      ],
+      "answerIndex": 2,
+      "explanation": "リスクマネジメントは、プロジェクトの目標達成に影響を与える可能性のあるリスクを早期に特定し、適切に対応することで、プロジェクトの成功確率を高め、遅延、コスト超過、品質低下といった深刻な問題を回避するために不可欠です。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230324_cnt_938dda303d_quiz_range_01__q_q-13_question_4e792dac.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230325_cnt_938dda303d_quiz_range_01__q_q-13_choice_0_6bae038a.mp3",
+          "objects/audio/av_20260721_230326_cnt_938dda303d_quiz_range_01__q_q-13_choice_1_cb78e349.mp3",
+          "objects/audio/av_20260721_230327_cnt_938dda303d_quiz_range_01__q_q-13_choice_2_646f51cc.mp3",
+          "objects/audio/av_20260721_230328_cnt_938dda303d_quiz_range_01__q_q-13_choice_3_1cab6528.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230329_cnt_938dda303d_quiz_range_01__q_q-13_explanation_39b31810.mp3"
+      }
+    },
+    {
+      "id": "q-14",
+      "question": "リスクマネジメントの最初のステップとして何を行うべきですか。",
+      "choices": [
+        "リスクに対応するための予算を確保することです。",
+        "プロジェクトに内在するあらゆるリスクを特定することです。",
+        "リスク発生時に責任を負う担当者を決定することです。",
+        "リスクを完全に排除するための計画を立てることです。"
+      ],
+      "answerIndex": 1,
+      "explanation": "リスクマネジメントの最初のステップは、プロジェクトに内在する可能性のあるあらゆるリスクを特定することです。このプロセスを通じて、潜在的なリスクの全体像を把握します。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230330_cnt_938dda303d_quiz_range_01__q_q-14_question_c9aaad64.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230331_cnt_938dda303d_quiz_range_01__q_q-14_choice_0_5a59a330.mp3",
+          "objects/audio/av_20260721_230334_cnt_938dda303d_quiz_range_01__q_q-14_choice_1_52dd0791.mp3",
+          "objects/audio/av_20260721_230335_cnt_938dda303d_quiz_range_01__q_q-14_choice_2_9383fe7c.mp3",
+          "objects/audio/av_20260721_230336_cnt_938dda303d_quiz_range_01__q_q-14_choice_3_6f497a57.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230337_cnt_938dda303d_quiz_range_01__q_q-14_explanation_e0acf6c9.mp3"
+      }
+    },
+    {
+      "id": "q-15",
+      "question": "プロジェクトのリスクを特定する際に有効な手法として、チームでアイデアを出し合う方法はどれですか。",
+      "choices": [
+        "SWOT分析のみ",
+        "ブレインストーミングやデルファイ法",
+        "モンテカルロシミュレーション",
+        "期待値分析"
+      ],
+      "answerIndex": 1,
+      "explanation": "リスク特定において、ブレインストーミングやデルファイ法は、チームメンバーから幅広いアイデアを引き出し、多様なリスクを発見するのに役立つ有効な手法です。",
+      "tts": {
+        "choiceTexts": [
+          "スウォットぶんせきのみ",
+          "ブレインストーミングやデルファイほう",
+          "",
+          ""
+        ],
+        "explanationText": "リスク特定において、ブレインストーミングやデルファイほうは、チームメンバーから幅広いアイデアを引き出し、多様なリスクを発見するのに役立つ有効な手法です。",
+        "questionAudioPath": "objects/audio/av_20260721_230338_cnt_938dda303d_quiz_range_01__q_q-15_question_d1f37ab2.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230340_cnt_938dda303d_quiz_range_01__q_q-15_choice_0_7045e970.mp3",
+          "objects/audio/av_20260721_230341_cnt_938dda303d_quiz_range_01__q_q-15_choice_1_3176ac94.mp3",
+          "objects/audio/av_20260721_230342_cnt_938dda303d_quiz_range_01__q_q-15_choice_2_2be1ba7c.mp3",
+          "objects/audio/av_20260721_230343_cnt_938dda303d_quiz_range_01__q_q-15_choice_3_83d680e1.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230344_cnt_938dda303d_quiz_range_01__q_q-15_explanation_8f983a8d.mp3"
+      }
+    },
+    {
+      "id": "q-16",
+      "question": "定性的リスク分析の主な目的は何ですか。",
+      "choices": [
+        "リスクがプロジェクトのコストやスケジュールに与える具体的な金額や期間を数値化することです。",
+        "過去のプロジェクトデータを用いて、リスクの発生パターンを統計的に予測することです。",
+        "プロジェクトチーム内でリスクに関する責任分担を明確にすることです。",
+        "リスクの発生確率とプロジェクト目標への影響度を、「高」「中」「低」といった尺度で評価し、優先順位を付けることです。"
+      ],
+      "answerIndex": 3,
+      "explanation": "定性的リスク分析は、リスクの発生確率と影響度を「高」「中」「低」などの主観的な尺度で評価し、そのリスクがプロジェクト目標に与える影響に基づいて優先順位を付けることを主な目的とします。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230345_cnt_938dda303d_quiz_range_01__q_q-16_question_55367c2c.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230346_cnt_938dda303d_quiz_range_01__q_q-16_choice_0_bcd8385c.mp3",
+          "objects/audio/av_20260721_230347_cnt_938dda303d_quiz_range_01__q_q-16_choice_1_00d99fdf.mp3",
+          "objects/audio/av_20260721_230348_cnt_938dda303d_quiz_range_01__q_q-16_choice_2_f6cb6903.mp3",
+          "objects/audio/av_20260721_230349_cnt_938dda303d_quiz_range_01__q_q-16_choice_3_c5abcbe1.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230350_cnt_938dda303d_quiz_range_01__q_q-16_explanation_28a0b308.mp3"
+      }
+    },
+    {
+      "id": "q-17",
+      "question": "定量的リスク分析の目的として、最も適切なものはどれですか。",
+      "choices": [
+        "リスク発生時の法的責任を明確にすることです。",
+        "プロジェクトの目標達成に影響を与える可能性のある不確実な事象を主観的に分類することです。",
+        "リスク管理計画を文書化し、プロジェクトチーム内で共有することです。",
+        "特定されたリスクがプロジェクトのコストやスケジュールに与える具体的な金額や期間を数値化して評価することです。"
+      ],
+      "answerIndex": 3,
+      "explanation": "定量的リスク分析は、特定されたリスクがプロジェクトの目標、特にコストやスケジュールに及ぼす影響を、期待値分析やモンテカルロシミュレーションなどの統計的手法を用いて数値化し、客観的に評価することを目的とします。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230351_cnt_938dda303d_quiz_range_01__q_q-17_question_e94ad37c.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230352_cnt_938dda303d_quiz_range_01__q_q-17_choice_0_8fb0e93c.mp3",
+          "objects/audio/av_20260721_230353_cnt_938dda303d_quiz_range_01__q_q-17_choice_1_b33cb64a.mp3",
+          "objects/audio/av_20260721_230354_cnt_938dda303d_quiz_range_01__q_q-17_choice_2_54d4808d.mp3",
+          "objects/audio/av_20260721_230356_cnt_938dda303d_quiz_range_01__q_q-17_choice_3_35b2df40.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230357_cnt_938dda303d_quiz_range_01__q_q-17_explanation_bc1bc598.mp3"
+      }
+    },
+    {
+      "id": "q-18",
+      "question": "定性的リスク分析と定量的リスク分析の主な違いは何ですか。",
+      "choices": [
+        "定性的リスク分析はリスクを排除することを目指し、定量的リスク分析はリスクを受け入れることを目指します。",
+        "定性的リスク分析は主観的な判断に基づいてリスクを評価し、定量的リスク分析は数値化して客観的に評価します。",
+        "定性的リスク分析は大規模プロジェクトに適用され、定量的リスク分析は小規模プロジェクトに適用されます。",
+        "定性的リスク分析はプロジェクトの開始段階で行われ、定量的リスク分析はプロジェクトの終了段階で行われます。"
+      ],
+      "answerIndex": 1,
+      "explanation": "定性的リスク分析は「高」「中」「低」のような主観的な尺度でリスクの優先順位を付けますが、定量的リスク分析はリスクの影響を具体的な金額や期間として数値化し、より客観的なデータに基づいて評価します。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230358_cnt_938dda303d_quiz_range_01__q_q-18_question_d7ed8b26.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230359_cnt_938dda303d_quiz_range_01__q_q-18_choice_0_ca3b771e.mp3",
+          "objects/audio/av_20260721_230400_cnt_938dda303d_quiz_range_01__q_q-18_choice_1_77fa6499.mp3",
+          "objects/audio/av_20260721_230402_cnt_938dda303d_quiz_range_01__q_q-18_choice_2_0af7b024.mp3",
+          "objects/audio/av_20260721_230403_cnt_938dda303d_quiz_range_01__q_q-18_choice_3_2e3b41f6.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230404_cnt_938dda303d_quiz_range_01__q_q-18_explanation_7e772ccb.mp3"
+      }
+    },
+    {
+      "id": "q-19",
+      "question": "ITプロジェクトが完了する条件として、最も適切なものはどれですか。",
+      "choices": [
+        "全ての予算が使い切られた時点です。",
+        "プロジェクトチームのメンバー全員が辞職した時点です。",
+        "プロジェクトの目標が達成されるか、または目標達成が不可能になった時点です。",
+        "新しい技術がさらに登場し、計画が古くなった時点です。"
+      ],
+      "answerIndex": 2,
+      "explanation": "プロジェクトは、設定された目標が達成された場合、またはその目標達成が不可能であると判断された時点で完了します。",
+      "tts": {
+        "questionText": "アイティープロジェクトが完了する条件として、最も適切なものはどれですか。",
+        "questionAudioPath": "objects/audio/av_20260721_230405_cnt_938dda303d_quiz_range_01__q_q-19_question_390788a3.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230406_cnt_938dda303d_quiz_range_01__q_q-19_choice_0_851492a5.mp3",
+          "objects/audio/av_20260721_230407_cnt_938dda303d_quiz_range_01__q_q-19_choice_1_d3826648.mp3",
+          "objects/audio/av_20260721_230408_cnt_938dda303d_quiz_range_01__q_q-19_choice_2_6c9491bb.mp3",
+          "objects/audio/av_20260721_230409_cnt_938dda303d_quiz_range_01__q_q-19_choice_3_e28470ae.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230410_cnt_938dda303d_quiz_range_01__q_q-19_explanation_51b4cf9f.mp3"
+      }
+    },
+    {
+      "id": "q-20",
+      "question": "プロジェクトマネジメントにおいて、QCD（品質、費用、納期）のバランス管理が重要である理由は何ですか。",
+      "choices": [
+        "それぞれの要素が密接に関連し合っているため、特定の要素のみを追求すると他の要素に悪影響を与える可能性があるからです。",
+        "プロジェクトチーム内の競争を促進し、生産性を向上させるためです。",
+        "外部の監査機関からの評価を高く保つためです。",
+        "プロジェクトの予算を最大限に活用し、最大の利益を得るためです。"
+      ],
+      "answerIndex": 0,
+      "explanation": "QCDの各要素は相互に影響し合うため、例えば費用削減だけを追求すると品質低下や納期遅延につながる可能性があります。これらの要素の最適なバランスを見つけ、適切に管理することがプロジェクトの成功には不可欠です。",
+      "tts": {
+        "questionText": "プロジェクトマネジメントにおいて、キューシーディー（品質、費用、納期）のバランス管理が重要である理由は何ですか。",
+        "explanationText": "キューシーディーの各要素は相互に影響し合うため、例えば費用削減だけを追求すると品質低下や納期遅延につながる可能性があります。これらの要素の最適なバランスを見つけ、適切に管理することがプロジェクトの成功には不可欠です。",
+        "questionAudioPath": "objects/audio/av_20260721_230411_cnt_938dda303d_quiz_range_01__q_q-20_question_3ef27158.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230412_cnt_938dda303d_quiz_range_01__q_q-20_choice_0_222c50d1.mp3",
+          "objects/audio/av_20260721_230413_cnt_938dda303d_quiz_range_01__q_q-20_choice_1_b786201d.mp3",
+          "objects/audio/av_20260721_230414_cnt_938dda303d_quiz_range_01__q_q-20_choice_2_dbaf4400.mp3",
+          "objects/audio/av_20260721_230415_cnt_938dda303d_quiz_range_01__q_q-20_choice_3_822f7932.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230416_cnt_938dda303d_quiz_range_01__q_q-20_explanation_30895b46.mp3"
+      }
+    },
+    {
+      "id": "q-21",
+      "question": "プロジェクト全体の成否に直結すると言われる、計画段階での重要な要素は何ですか。",
+      "choices": [
+        "最新技術の無条件な採用",
+        "チームメンバーの友情",
+        "顧客への頻繁な連絡",
+        "計画の正確性"
+      ],
+      "answerIndex": 3,
+      "explanation": "プロジェクトの計画の正確性は、プロジェクト全体の成否に直接影響します。計画が不正確だと、スコープの曖昧さ、スケジュール遅延、コスト超過などの問題が発生しやすくなります。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230421_cnt_938dda303d_quiz_range_01__q_q-21_question_4c5db277.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230422_cnt_938dda303d_quiz_range_01__q_q-21_choice_0_86677dbe.mp3",
+          "objects/audio/av_20260721_230423_cnt_938dda303d_quiz_range_01__q_q-21_choice_1_ee6ae515.mp3",
+          "objects/audio/av_20260721_230424_cnt_938dda303d_quiz_range_01__q_q-21_choice_2_eb0aa930.mp3",
+          "objects/audio/av_20260721_230425_cnt_938dda303d_quiz_range_01__q_q-21_choice_3_ab087ef9.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230426_cnt_938dda303d_quiz_range_01__q_q-21_explanation_6da50dfd.mp3"
+      }
+    },
+    {
+      "id": "q-22",
+      "question": "リスク特定プロセスにおいて、プロジェクトチーム以外に意見を集めるべき関係者は誰ですか。",
+      "choices": [
+        "プロジェクトマネージャーのみ",
+        "顧客や供給業者など多様な関係者",
+        "競合他社の経営層",
+        "業界の著名な評論家"
+      ],
+      "answerIndex": 1,
+      "explanation": "リスク特定では、プロジェクトチームだけでなく、顧客、供給業者、その他の関係者など、多様な視点から意見を集めることで、潜在的なリスクを包括的に洗い出すことができます。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230427_cnt_938dda303d_quiz_range_01__q_q-22_question_a90066e3.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230428_cnt_938dda303d_quiz_range_01__q_q-22_choice_0_17650543.mp3",
+          "objects/audio/av_20260721_230429_cnt_938dda303d_quiz_range_01__q_q-22_choice_1_b92ea246.mp3",
+          "objects/audio/av_20260721_230430_cnt_938dda303d_quiz_range_01__q_q-22_choice_2_a4d49921.mp3",
+          "objects/audio/av_20260721_230431_cnt_938dda303d_quiz_range_01__q_q-22_choice_3_167b7244.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230432_cnt_938dda303d_quiz_range_01__q_q-22_explanation_c373d399.mp3"
+      }
+    },
+    {
+      "id": "q-23",
+      "question": "プロジェクトのリスク特定において、専門家の意見を集約するのに有効な手法の一つは何ですか。",
+      "choices": [
+        "デルファイ法",
+        "モンテカルロシミュレーション",
+        "ブレインストーミング",
+        "SWOT分析"
+      ],
+      "answerIndex": 0,
+      "explanation": "デルファイ法は、専門家からの意見を匿名で複数回収集し、集約することで、リスクの特定や予測の精度を高める手法です。ブレインストーミングもチームでのアイデア出しに有効ですが、デルファイ法は特に専門家の意見集約に焦点を当てます。",
+      "tts": {
+        "choiceTexts": [
+          "デルファイほう",
+          "",
+          "",
+          "スウォットぶんせき"
+        ],
+        "explanationText": "デルファイほうは、専門家からの意見を匿名で複数回収集し、集約することで、リスクの特定や予測の精度を高める手法です。ブレインストーミングもチームでのアイデア出しに有効ですが、デルファイほうは特に専門家の意見集約に焦点を当てます。",
+        "questionAudioPath": "objects/audio/av_20260721_230433_cnt_938dda303d_quiz_range_01__q_q-23_question_e2f70538.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230434_cnt_938dda303d_quiz_range_01__q_q-23_choice_0_0d3f9da5.mp3",
+          "objects/audio/av_20260721_230435_cnt_938dda303d_quiz_range_01__q_q-23_choice_1_27d950c3.mp3",
+          "objects/audio/av_20260721_230436_cnt_938dda303d_quiz_range_01__q_q-23_choice_2_c6218157.mp3",
+          "objects/audio/av_20260721_230437_cnt_938dda303d_quiz_range_01__q_q-23_choice_3_cae7424e.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230438_cnt_938dda303d_quiz_range_01__q_q-23_explanation_465b00ce.mp3"
+      }
+    },
+    {
+      "id": "q-24",
+      "question": "SWOT分析をプロジェクトのリスク特定に用いる場合、主にどのような側面を洗い出すのに役立ちますか。",
+      "choices": [
+        "プロジェクトの強み、弱み、機会、脅威を体系的に把握し、潜在的なリスクや好機を特定するのに役立ちます。",
+        "プロジェクトチームの個々のメンバーのスキルレベルを評価するのに役立ちます。",
+        "プロジェクトの品質基準を客観的に設定するのに役立ちます。",
+        "プロジェクトのスケジュール遅延の具体的な期間を数値化するのに役立ちます。"
+      ],
+      "answerIndex": 0,
+      "explanation": "SWOT分析は、プロジェクトの内部要因である強み（Strengths）と弱み（Weaknesses）、外部要因である機会（Opportunities）と脅威（Threats）を体系的に分析することで、プロジェクトに影響を与える潜在的なリスク（脅威）や好機（機会）を特定するのに効果的です。",
+      "tts": {
+        "questionText": "スウォットぶんせきをプロジェクトのリスク特定に用いる場合、主にどのような側面を洗い出すのに役立ちますか。",
+        "explanationText": "スウォット分析では、プロジェクトの内部要因である強みと弱みを整理します。あわせて、外部要因である機会と脅威を分析します。これにより、プロジェクトに影響する潜在的なリスクや好機を特定できます。",
+        "questionAudioPath": "objects/audio/av_20260721_230439_cnt_938dda303d_quiz_range_01__q_q-24_question_8267df09.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230440_cnt_938dda303d_quiz_range_01__q_q-24_choice_0_6e81e0b7.mp3",
+          "objects/audio/av_20260721_230442_cnt_938dda303d_quiz_range_01__q_q-24_choice_1_ab6ebc2c.mp3",
+          "objects/audio/av_20260721_230443_cnt_938dda303d_quiz_range_01__q_q-24_choice_2_4d184c6b.mp3",
+          "objects/audio/av_20260721_230444_cnt_938dda303d_quiz_range_01__q_q-24_choice_3_fcb2cd3c.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_231257_cnt_938dda303d_quiz_range_01__q_q-24_explanation_7d9f9a17.mp3"
+      }
+    },
+    {
+      "id": "q-25",
+      "question": "定量的リスク分析でリスクがプロジェクトのコストに与える具体的な影響を算出するために用いられる統計的手法は何ですか。",
+      "choices": [
+        "デルファイ法",
+        "SWOT分析",
+        "ブレインストーミング",
+        "期待値分析"
+      ],
+      "answerIndex": 3,
+      "explanation": "期待値分析は、特定の事象（リスク）が発生した場合の損益を、その発生確率と影響額を掛け合わせることで算出し、プロジェクトのコストに対する具体的な影響を数値化するために用いられる定量的リスク分析の手法です。",
+      "tts": {
+        "choiceTexts": [
+          "デルファイほう",
+          "スウォットぶんせき",
+          "",
+          ""
+        ],
+        "questionAudioPath": "objects/audio/av_20260721_230446_cnt_938dda303d_quiz_range_01__q_q-25_question_94194a6f.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230447_cnt_938dda303d_quiz_range_01__q_q-25_choice_0_9577b1b7.mp3",
+          "objects/audio/av_20260721_230448_cnt_938dda303d_quiz_range_01__q_q-25_choice_1_71cafb1f.mp3",
+          "objects/audio/av_20260721_230449_cnt_938dda303d_quiz_range_01__q_q-25_choice_2_9db53597.mp3",
+          "objects/audio/av_20260721_230450_cnt_938dda303d_quiz_range_01__q_q-25_choice_3_d1c2f034.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230451_cnt_938dda303d_quiz_range_01__q_q-25_explanation_571edf67.mp3"
+      }
+    },
+    {
+      "id": "q-26",
+      "question": "プロジェクトマネジメントにおいて、限られた「資源」を効率的に活用することが求められますが、この「資源」には何が含まれますか。",
+      "choices": [
+        "人材、予算、時間、設備など",
+        "顧客からの要望、競合の情報、市場の動向",
+        "品質基準、セキュリティポリシー、法的規制",
+        "製品の機能、デザイン、ユーザビリティ"
+      ],
+      "answerIndex": 0,
+      "explanation": "プロジェクトマネジメントでは、特定の目標を達成するために、人材、予算、時間、設備といった限られた資源を効率的に計画・実行・管理することが重要です。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230452_cnt_938dda303d_quiz_range_01__q_q-26_question_e032b497.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230453_cnt_938dda303d_quiz_range_01__q_q-26_choice_0_2e9c5b3d.mp3",
+          "objects/audio/av_20260721_230454_cnt_938dda303d_quiz_range_01__q_q-26_choice_1_8a2f0271.mp3",
+          "objects/audio/av_20260721_230455_cnt_938dda303d_quiz_range_01__q_q-26_choice_2_407e4f5f.mp3",
+          "objects/audio/av_20260721_230456_cnt_938dda303d_quiz_range_01__q_q-26_choice_3_fe250b3b.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230457_cnt_938dda303d_quiz_range_01__q_q-26_explanation_4218d05f.mp3"
+      }
+    },
+    {
+      "id": "q-27",
+      "question": "プロジェクトが定常業務と異なる「独自の成果物」を生み出すことについて、最も適切な説明はどれですか。",
+      "choices": [
+        "プロジェクトの成果物が常に競合他社にはない画期的なものであることを指します。",
+        "プロジェクトの成果物が市場で独占的に販売されることを保証するものです。",
+        "プロジェクトの成果物が一度作成されると、二度と変更されないことを意味します。",
+        "プロジェクトごとに全く新しいシステムやサービス、または改修された既存システムなど、そのプロジェクト特有のアウトプットがあることを指します。"
+      ],
+      "answerIndex": 3,
+      "explanation": "プロジェクトは定常業務とは異なり、そのプロジェクトのために計画され、実行された結果として、全く新しいシステム、サービス、または既存システムの改修といった、そのプロジェクトならではの「独自の成果物」を生み出します。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230458_cnt_938dda303d_quiz_range_01__q_q-27_question_9572b60f.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230459_cnt_938dda303d_quiz_range_01__q_q-27_choice_0_cb2f0c70.mp3",
+          "objects/audio/av_20260721_230500_cnt_938dda303d_quiz_range_01__q_q-27_choice_1_3eeaebe6.mp3",
+          "objects/audio/av_20260721_230501_cnt_938dda303d_quiz_range_01__q_q-27_choice_2_2794d309.mp3",
+          "objects/audio/av_20260721_230502_cnt_938dda303d_quiz_range_01__q_q-27_choice_3_5be51c4f.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230503_cnt_938dda303d_quiz_range_01__q_q-27_explanation_94f90c38.mp3"
+      }
+    },
+    {
+      "id": "q-28",
+      "question": "ITプロジェクトにおいて、要件が途中で変化しやすいという特性は、主にどのような課題をもたらしますか。",
+      "choices": [
+        "プロジェクトチーム内のコミュニケーションが不要になります。",
+        "計画段階で全てを完璧に予測することが非常に困難になります。",
+        "プロジェクトの納期が常に短縮される結果となります。",
+        "プロジェクトの予算を無制限に増やすことを可能にします。"
+      ],
+      "answerIndex": 1,
+      "explanation": "ITプロジェクトでは技術の進歩が速く、要件が途中で変化することが多いため、計画段階で全ての要件を完璧に予測することが困難になり、プロジェクト管理を難しくする要因となります。",
+      "tts": {
+        "questionText": "アイティープロジェクトにおいて、要件が途中で変化しやすいという特性は、主にどのような課題をもたらしますか。",
+        "explanationText": "アイティープロジェクトでは技術の進歩が速く、要件が途中で変化することが多いため、計画段階で全ての要件を完璧に予測することが困難になり、プロジェクト管理を難しくする要因となります。",
+        "questionAudioPath": "objects/audio/av_20260721_230504_cnt_938dda303d_quiz_range_01__q_q-28_question_243c1971.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230505_cnt_938dda303d_quiz_range_01__q_q-28_choice_0_4cb76bc9.mp3",
+          "objects/audio/av_20260721_230506_cnt_938dda303d_quiz_range_01__q_q-28_choice_1_f0811866.mp3",
+          "objects/audio/av_20260721_230507_cnt_938dda303d_quiz_range_01__q_q-28_choice_2_5c53351a.mp3",
+          "objects/audio/av_20260721_230508_cnt_938dda303d_quiz_range_01__q_q-28_choice_3_d5abef0d.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230509_cnt_938dda303d_quiz_range_01__q_q-28_explanation_432cb063.mp3"
+      }
+    },
+    {
+      "id": "q-29",
+      "question": "プロジェクトにおけるリスクを単なる「脅威」としてだけでなく、「好機」としても捉えるべきであるとされていますが、その理由は何ですか。",
+      "choices": [
+        "予期せぬ出来事がプロジェクトにプラスの影響をもたらす可能性もあるため、積極的に活用すべきだからです。",
+        "リスクはすべてポジティブな結果につながるため、恐れる必要がないからです。",
+        "脅威と好機は相互に打ち消し合うため、両方を考慮する必要がないからです。",
+        "リスクを脅威として捉えると、プロジェクトが中止になる可能性があるからです。"
+      ],
+      "answerIndex": 0,
+      "explanation": "プロジェクトのリスクには、プロジェクトの目標達成を阻害する可能性のある「脅威」だけでなく、プロジェクトにプラスの影響を与える「好機」となる可能性も含まれます。好機を捉え、活用することもリスクマネジメントの重要な側面です。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230510_cnt_938dda303d_quiz_range_01__q_q-29_question_8771f3f6.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230511_cnt_938dda303d_quiz_range_01__q_q-29_choice_0_ee8c13b3.mp3",
+          "objects/audio/av_20260721_230512_cnt_938dda303d_quiz_range_01__q_q-29_choice_1_da6117a1.mp3",
+          "objects/audio/av_20260721_230513_cnt_938dda303d_quiz_range_01__q_q-29_choice_2_2cf081dc.mp3",
+          "objects/audio/av_20260721_230514_cnt_938dda303d_quiz_range_01__q_q-29_choice_3_ee996c0c.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230515_cnt_938dda303d_quiz_range_01__q_q-29_explanation_05ee0259.mp3"
+      }
+    },
+    {
+      "id": "q-30",
+      "question": "プロジェクトマネジメントが目指す最終的な目標は何ですか。",
+      "choices": [
+        "特定の目標を限られた資源や期間内で効率的かつ効果的に達成することです。",
+        "プロジェクトチームメンバーの個人的なスキル向上を最優先することです。",
+        "常に最新技術を導入し、業界のトレンドを追いかけることです。",
+        "競合他社よりも早く市場に製品を投入することだけを追求することです。"
+      ],
+      "answerIndex": 0,
+      "explanation": "プロジェクトマネジメントの最終的な目標は、特定の目標を、与えられた限られた資源（人材、予算など）や期間内で、最も効率的かつ効果的に達成することにあります。",
+      "tts": {
+        "questionAudioPath": "objects/audio/av_20260721_230516_cnt_938dda303d_quiz_range_01__q_q-30_question_50fa87bf.mp3",
+        "choiceAudioPaths": [
+          "objects/audio/av_20260721_230517_cnt_938dda303d_quiz_range_01__q_q-30_choice_0_78876f38.mp3",
+          "objects/audio/av_20260721_230518_cnt_938dda303d_quiz_range_01__q_q-30_choice_1_cd4397a0.mp3",
+          "objects/audio/av_20260721_230519_cnt_938dda303d_quiz_range_01__q_q-30_choice_2_0052cc7e.mp3",
+          "objects/audio/av_20260721_230520_cnt_938dda303d_quiz_range_01__q_q-30_choice_3_b83dd92c.mp3"
+        ],
+        "explanationAudioPath": "objects/audio/av_20260721_230521_cnt_938dda303d_quiz_range_01__q_q-30_explanation_1cf577cd.mp3"
+      }
+    }
+  ]
+}
