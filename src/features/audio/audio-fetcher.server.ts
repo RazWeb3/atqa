@@ -12,6 +12,8 @@ export type AudioFetchResult = {
   body: ArrayBuffer;
   contentType: string;
   contentLength: number;
+  status: number;
+  contentRange: string | null;
 };
 
 /**
@@ -95,6 +97,8 @@ export async function fetchAudio(
         body,
         contentType: contentType || "audio/mpeg",
         contentLength: body.byteLength,
+        status: response.status,
+        contentRange: response.headers.get("content-range"),
       };
     } catch (error) {
       clearTimeout(timeoutId);

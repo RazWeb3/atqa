@@ -30,8 +30,15 @@ export async function GET(request: NextRequest) {
       "Cache-Control": "public, max-age=3600",
     };
 
+    // A 206 response is only valid with the upstream Content-Range header;
+    // otherwise browsers reject the partial response.
+    const isPartial = result.status === 206 && result.contentRange !== null;
+    if (isPartial) {
+      headers["Content-Range"] = result.contentRange as string;
+    }
+
     return new NextResponse(result.body, {
-      status: range ? 206 : 200,
+      status: isPartial ? 206 : 200,
       headers,
     });
   } catch (error) {

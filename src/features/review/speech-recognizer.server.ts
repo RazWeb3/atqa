@@ -13,14 +13,26 @@ export type SpeechResult = {
   words: SpeechWord[];
 };
 
-// Cache the speech client
-let speechClient: v2.SpeechClient | null = null;
+// Cache the speech client per API endpoint
+const speechClients = new Map<string, v2.SpeechClient>();
 
-function getSpeechClient(): v2.SpeechClient {
-  if (!speechClient) {
-    speechClient = new v2.SpeechClient();
+function getSpeechLocation(): string {
+  // Cloud STT V2 with the `_` recognizer supports ja-JP on the global
+  // location; regional endpoints are opt-in via SPEECH_LOCATION.
+  return process.env.SPEECH_LOCATION || "global";
+}
+
+function getSpeechClient(location: string): v2.SpeechClient {
+  const endpoint =
+    location === "global"
+      ? "speech.googleapis.com"
+      : `${location}-speech.googleapis.com`;
+  let client = speechClients.get(endpoint);
+  if (!client) {
+    client = new v2.SpeechClient({ apiEndpoint: endpoint });
+    speechClients.set(endpoint, client);
   }
-  return speechClient;
+  return client;
 }
 
 /**
@@ -45,10 +57,9 @@ export function durationToSeconds(
 export async function recognizeSpeech(
   audio: Buffer,
 ): Promise<SpeechResult> {
-  const client = getSpeechClient();
-
   const project = process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+  const location = getSpeechLocation();
+  const client = getSpeechClient(location);
 
   if (!project) {
     throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required");
@@ -61,6 +72,7 @@ export async function recognizeSpeech(
     config: {
       autoDecodingConfig: {},
       languageCodes: ["ja-JP"],
+      model: "long",
       features: {
         enableWordTimeOffsets: true,
         enableWordConfidence: true,

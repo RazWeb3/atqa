@@ -52,7 +52,7 @@ export async function reviewAudioWithGemini(
   input: AudioReviewInput,
 ): Promise<GeminiReview> {
   const ai = getGenAI();
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
   const editsDescription = input.candidateEdits
     .filter((e) => e.operation !== "equal")

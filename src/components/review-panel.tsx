@@ -6,6 +6,7 @@ import type { ReviewResponse, ReviewIssue } from "@/features/review/review-contr
 type ReviewPanelProps = {
   review: ReviewResponse | undefined;
   isReviewing: boolean;
+  error?: string | null;
   humanResolved: boolean;
   onReview: () => void;
   onSeek: (seconds: number) => void;
@@ -58,6 +59,7 @@ function IssueItem({
 export function ReviewPanel({
   review,
   isReviewing,
+  error = null,
   humanResolved,
   onReview,
   onSeek,
@@ -93,6 +95,12 @@ export function ReviewPanel({
           </p>
         )}
       </div>
+
+      {error && !isReviewing && (
+        <p className="review-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {review && !isReviewing && (
         <div className="review-result">

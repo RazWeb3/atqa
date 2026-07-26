@@ -16,12 +16,24 @@ type ReviewWorkspaceProps = {
   onReset: () => void;
 };
 
+// crypto.randomUUID is unavailable in non-secure contexts (e.g. LAN IP over
+// http), so fall back to a random URL-safe key.
+function createIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return Array.from({ length: 32 }, () =>
+    Math.floor(Math.random() * 36).toString(36),
+  ).join("");
+}
+
 export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
   const { units } = content;
   const player = useContinuousPlayer(units);
   const [reviews, setReviews] = useState<Record<string, ReviewResponse>>({});
   const [humanResolutions, setHumanResolutions] = useState<Record<string, boolean>>({});
   const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const selectedUnit = units[player.state.unitIndex];
 
@@ -29,12 +41,13 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
     if (!selectedUnit || isReviewing) return;
 
     setIsReviewing(true);
+    setReviewError(null);
     try {
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID(),
+          "Idempotency-Key": createIdempotencyKey(),
         },
         body: JSON.stringify({ unit: selectedUnit }),
       });
@@ -46,9 +59,11 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
           ...prev,
           [selectedUnit.id]: result,
         }));
+      } else {
+        setReviewError("AI検査に失敗しました。もう一度お試しください。");
       }
     } catch {
-      // Error handling - could add error state
+      setReviewError("AI検査の送信に失敗しました。接続を確認してもう一度お試しください。");
     } finally {
       setIsReviewing(false);
     }
@@ -130,6 +145,7 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
         <ReviewPanel
           review={currentReview}
           isReviewing={isReviewing}
+          error={reviewError}
           humanResolved={currentResolved}
           onReview={handleReview}
           onSeek={player.seek}
