@@ -4,6 +4,21 @@ Autonomous TTS Quality Assurance Agent（ATQA）は、既存のクラウド音�
 
 > **全文を聞くQAから、AIが示した場所を判断するQAへ。**
 
+AI Native UX 2026 — AI Designathon @ MERGE 2026（DESIGN ENGカテゴリ）提出作品。
+
+## デモ
+
+- 🎬 **デモ動画**: https://youtu.be/m-2JO4h7m0A
+- 📄 **ピッチ資料**: [docs/pitch/ATQA_DESIGN_ENG_Pitch.pdf](docs/pitch/ATQA_DESIGN_ENG_Pitch.pdf)
+
+### スクリーンショット
+
+| ワークスペース全体 | セクション一覧 | AI検査結果 |
+|---|---|---|
+| ![ワークスペース全体](docs/screenshots/workspace-overview.png) | ![セクション一覧](docs/screenshots/section-list.png) | ![AI検査結果](docs/screenshots/review-result.png) |
+
+左：本文・音声生成用テキスト・AI検査を1画面に集約したワークスペース。中央：セクションごとの検査状態（正常／要確認）。右：発音の疑いを根拠と再生位置（4.5s–5.5s）付きで提示し、人が「問題あり」「誤検知」を判断します。
+
 ## 機能
 
 - **コンテンツ正規化**: Sokqa形式のdocument/quiz JSONを再生ユニットに正規化
@@ -84,6 +99,8 @@ gcloud run deploy atqa \
 
 - [MVP設計仕様書](docs/superpowers/specs/2026-07-27-atqa-mvp-design.md)
 - [実装計画](docs/superpowers/plans/2026-07-27-atqa-mvp-implementation.md)
+- [プロセスログ（AI対話記録・時間短縮指標）](docs/process-log.md)
+- [ブレスト・UX検討の成果物](docs/brainstorm/)
 - [運用ガイド](docs/operations.md)
 - [デモスクリプト](docs/demo-script.md)
 
@@ -97,5 +114,5 @@ AI Native UX 2026 — AI Designathon @ MERGE 2026
 
 ## ライセンス
 
-Private
+[MIT License](LICENSE)
 

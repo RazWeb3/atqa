@@ -1,0 +1,94 @@
+<h2>ATQA — どの体験を主役にするか</h2>
+<p class="subtitle">同じ検査機能でも、審査員に伝わる「AIネイティブさ」が変わります。カードをクリックして選択してください。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#09111f;color:#e8f0ff;min-height:310px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <strong style="letter-spacing:.08em">ATQA / REVIEW</strong>
+        <span style="font-size:11px;color:#7dd3fc">● AI READY</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+        <div style="background:#111c2e;border-radius:8px;padding:10px;font-size:11px;line-height:2">
+          <div style="color:#7dd3fc">DOCUMENT</div>
+          <div>01 全体像</div><div>02 特性</div><div>03 不確実性</div><div style="opacity:.55">04 QCD</div>
+        </div>
+        <div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1;background:#111c2e;border-radius:8px;padding:10px">
+              <small style="color:#8ca0bd">QA SCORE</small><div style="font-size:28px;color:#67e8f9">92</div>
+            </div>
+            <div style="flex:2;background:#111c2e;border-radius:8px;padding:10px">
+              <small style="color:#8ca0bd">AI STATUS</small><div style="margin-top:8px">3箇所を確認してください</div>
+            </div>
+          </div>
+          <div style="background:#111c2e;border-radius:8px;padding:12px;margin-bottom:10px">
+            <small style="color:#8ca0bd">AUDIO TIMELINE</small>
+            <div style="height:36px;margin-top:8px;background:repeating-linear-gradient(90deg,#22d3ee 0 2px,transparent 2px 7px);opacity:.65"></div>
+            <div style="height:3px;background:linear-gradient(90deg,#22d3ee 0 42%,#fb7185 42% 45%,#334155 45%)"></div>
+          </div>
+          <div style="background:#1b2638;border-left:3px solid #fb7185;border-radius:6px;padding:9px;font-size:11px">
+            <strong>02:14 · 誤読候補</strong><br>
+            期待「アイティー」／認識「イット」
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. AI QA Workbench（推奨）</h3>
+      <p>連続再生、波形、差分、AI判断を一画面に統合。プロ用途の説得力とデモ映えを両立します。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#f3f0e8;color:#17231d;min-height:310px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <strong style="font-family:serif;font-size:20px">ATQA Agent</strong>
+        <span style="font-size:11px;border:1px solid #789284;border-radius:20px;padding:4px 8px">Reviewing</span>
+      </div>
+      <div style="max-width:360px;margin:auto">
+        <div style="font-family:serif;font-size:24px;margin-bottom:8px">音声を、聴くべき場所だけに。</div>
+        <p style="font-size:12px;color:#52645a">AIが42セクションを整理しました。セクション03を検査します。</p>
+        <div style="background:#fffdf7;border-radius:14px;padding:14px;margin:20px 0;box-shadow:0 8px 24px #1b332218">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="width:34px;height:34px;border-radius:50%;background:#d5f5df;display:grid;place-items:center">✦</div>
+            <div><strong>AIレビュー</strong><br><small>1つの読みを確認してください</small></div>
+          </div>
+          <div style="margin-top:14px;padding:10px;background:#f7eee5;border-radius:8px;font-size:12px">
+            「ITプロジェクト」<br><span style="color:#9b473c">イット → アイティー</span>
+          </div>
+        </div>
+        <button class="mock-button" style="width:100%;background:#163d2b;color:white;border-radius:24px">問題箇所から再生</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Calm AI Reviewer</h3>
+      <p>AIとの協働体験を前面に出す、余白の多い案。革新的に見えますが、処理の透明性はAより弱めです。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#fff;color:#171717;min-height:310px">
+      <div style="font-weight:800;font-size:18px;margin-bottom:18px">ATQA <span style="color:#635bff">/ LIVE CHECK</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:30px 0">
+        <div><small>現在のセクション</small><div style="font-size:40px;font-weight:800">03 / 42</div></div>
+        <div style="width:84px;height:84px;border-radius:50%;border:8px solid #e8e6ff;display:grid;place-items:center;font-size:24px;font-weight:800;color:#635bff">92</div>
+      </div>
+      <div style="height:70px;background:repeating-linear-gradient(90deg,#635bff 0 3px,transparent 3px 8px);opacity:.65;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="mock-button" style="flex:1">◀</button>
+        <button class="mock-button" style="flex:3;background:#635bff;color:white">▶ 連続再生</button>
+        <button class="mock-button" style="flex:1">▶|</button>
+      </div>
+      <div style="margin-top:16px;padding:10px;border:1px solid #eee;border-radius:8px;font-size:11px">AI検査結果は再生と同期して下部に表示</div>
+    </div>
+    <div class="card-body">
+      <h3>C. Demo-first Player</h3>
+      <p>大きな再生操作とスコアに集中。短い動画では伝わりやすい一方、独自性と業務価値の深さが弱くなります。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:22px">
+  <p><strong>推奨：</strong>Aを基礎に、Bの「AIが今何を判断しているか」という自然な案内を取り入れる構成です。これが4つの審査基準を最も均等に満たします。</p>
+</div>

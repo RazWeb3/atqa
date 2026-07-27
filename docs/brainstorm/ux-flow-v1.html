@@ -1,0 +1,65 @@
+<h2>ATQA — 1本のデモ体験</h2>
+<p class="subtitle">操作は4段階。AIの処理を待つ画面ではなく、「何を理解し、何を判断したか」が前へ進むたびに見える設計です。</p>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+  <div class="mockup" style="background:#f4f1e9;border-color:#d8d3c8">
+    <div class="mockup-header">1 / Import</div>
+    <div class="mockup-body" style="min-height:280px;color:#27322c">
+      <div style="font:21px Georgia;margin-bottom:8px">音声コンテンツを検査</div>
+      <p style="font-size:11px;color:#64756b">Sokqa形式のJSONから、音声と期待読みを読み込みます。</p>
+      <div style="border:1px dashed #9b9b8f;border-radius:8px;padding:35px 12px;text-align:center;margin:24px 0;background:#fffdf8">
+        <b>JSONを選択</b><br><small>document / quiz</small>
+      </div>
+      <div style="font-size:10px;color:#6f766f">音声はCDNから取得。ファイル自体のアップロードは不要です。</div>
+    </div>
+  </div>
+
+  <div class="mockup" style="background:#f4f1e9;border-color:#d8d3c8">
+    <div class="mockup-header">2 / Understand</div>
+    <div class="mockup-body" style="min-height:280px;color:#27322c">
+      <div style="font:19px Georgia;margin-bottom:14px">構成を理解しました</div>
+      <div style="background:#fffdf8;border:1px solid #ddd8ce;border-radius:8px;padding:12px">
+        <small>DOCUMENT</small><div style="font-weight:700;margin:5px 0">ITプロジェクトの全体像</div>
+        <div style="display:flex;gap:6px;font-size:10px"><span style="background:#e3e9e4;padding:3px 6px;border-radius:12px">42 sections</span><span style="background:#e3e9e4;padding:3px 6px;border-radius:12px">42 audios</span></div>
+      </div>
+      <div style="font-size:11px;line-height:2.1;margin-top:14px">
+        <div>✓ 音声パス 42 / 42</div><div>✓ 読み上げ原稿 16件</div><div>✓ 表示文フォールバック 26件</div>
+      </div>
+      <button class="mock-button" style="width:100%;margin-top:18px;background:#355f49;color:white">レビューを開く</button>
+    </div>
+  </div>
+
+  <div class="mockup" style="background:#f4f1e9;border-color:#d8d3c8">
+    <div class="mockup-header">3 / Listen & Inspect</div>
+    <div class="mockup-body" style="min-height:280px;color:#27322c">
+      <div style="display:flex;justify-content:space-between"><b>03 不確実性</b><small>03 / 42</small></div>
+      <div style="height:48px;margin:18px 0 5px;background:repeating-linear-gradient(90deg,#768e7e 0 2px,transparent 2px 7px);opacity:.6"></div>
+      <div style="height:3px;background:linear-gradient(90deg,#355f49 0 38%,#a45a4f 38% 43%,#d7d4ca 43%)"></div>
+      <div style="display:flex;gap:6px;margin:14px 0">
+        <button class="mock-button">◀</button><button class="mock-button" style="flex:1;background:#355f49;color:white">▶ 連続再生</button><button class="mock-button">▶|</button>
+      </div>
+      <button class="mock-button" style="width:100%">このセクションをAI検査</button>
+      <p style="font-size:10px;color:#6f766f;margin-top:12px">連続再生は次の音声へ自動遷移。検査は選択中の単位だけ実行します。</p>
+    </div>
+  </div>
+
+  <div class="mockup" style="background:#f4f1e9;border-color:#d8d3c8">
+    <div class="mockup-header">4 / Review</div>
+    <div class="mockup-body" style="min-height:280px;color:#27322c">
+      <div style="display:flex;justify-content:space-between;align-items:end"><div><small>品質スコア</small><div style="font:32px Georgia;color:#355f49">92</div></div><span style="font-size:10px;background:#f3e7df;padding:4px 7px;border-radius:12px;color:#7d4139">1 要確認</span></div>
+      <div style="border-left:3px solid #a45a4f;background:#fff8f2;padding:10px;margin:14px 0;font-size:11px">
+        <b>00:08 · 読みを確認</b><br><br>
+        期待　アイティープロジェクト<br>
+        認識　イットプロジェクト<br><br>
+        <span style="color:#745047">AI根拠：アルファベット読みではなく単語として発音された可能性</span>
+      </div>
+      <button class="mock-button" style="width:100%;background:#355f49;color:white">問題位置から再生</button>
+      <button class="mock-button" style="width:100%;margin-top:6px">正常として扱う</button>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:22px">
+  <h3>クイズの場合</h3>
+  <p>左ナビは30問。1問を選ぶと、問題文 → 選択肢1〜4 → 解説の6ユニットを順番に連続再生します。AI検査は6ユニットのうち選択した1つだけ実行できます。</p>
+</div>

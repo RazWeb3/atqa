@@ -1,0 +1,56 @@
+<h2>第3部 — 二段階QAと判定契約</h2>
+<p class="subtitle">「音声がおかしい」だけで終わらせず、誤りが読み上げ原稿にあるのか、実音声にあるのかを分離します。</p>
+
+<div style="display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;gap:10px;align-items:stretch">
+  <div style="background:#f4f1e9;border:1px solid #d8d3c8;border-radius:10px;padding:18px">
+    <small style="color:#6b776f">CANONICAL EXPECTATION</small>
+    <div style="font:20px Georgia;margin:8px 0">正しい期待読み</div>
+    <div style="font-size:11px;line-height:1.9">
+      表示本文「ITプロジェクト」<br>
+      ＋ 辞書 <code>IT → アイティー</code><br>
+      ＋ 日本語読み変換
+    </div>
+    <div style="margin-top:14px;background:#fffdf8;padding:10px;border-radius:6px"><b>アイティープロジェクト</b></div>
+  </div>
+  <div style="display:grid;place-items:center;font-size:22px;color:#7c877f">→</div>
+  <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:10px;padding:18px">
+    <small style="color:#6b776f">STAGE 1</small>
+    <div style="font:20px Georgia;margin:8px 0">読み上げ原稿QA</div>
+    <div style="font-size:11px">実際の <code>tts.text</code></div>
+    <div style="margin:10px 0;background:#e8f0e9;padding:10px;border-radius:6px;color:#355f49"><b>アイティープロジェクト</b></div>
+    <div style="font-size:11px">判定：<b>原稿は一致</b><br>実音声QAへ進む</div>
+  </div>
+  <div style="display:grid;place-items:center;font-size:22px;color:#7c877f">→</div>
+  <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:10px;padding:18px">
+    <small style="color:#6b776f">STAGE 2</small>
+    <div style="font:20px Georgia;margin:8px 0">実音声QA</div>
+    <div style="font-size:11px">STT＋GeminiがMP3を検査</div>
+    <div style="margin:10px 0;background:#f3e7df;padding:10px;border-radius:6px;color:#7d4139"><b>イットプロジェクト…</b></div>
+    <div style="font-size:11px">判定：<b>音声誤読候補</b><br>再生位置：00:00–00:02</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>正規化は決定的な処理にする</h3>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px">
+    <div style="background:#eef1eb;padding:11px;border-radius:7px"><b>1. 辞書置換</b><br>長いキーを優先し、部分一致の衝突を防ぐ</div>
+    <div style="background:#eef1eb;padding:11px;border-radius:7px"><b>2. 日本語読み</b><br>形態素解析で漢字をかなへ変換</div>
+    <div style="background:#eef1eb;padding:11px;border-radius:7px"><b>3. 比較表記</b><br>ひらがなへ統一、空白・句読点を除外</div>
+    <div style="background:#eef1eb;padding:11px;border-radius:7px"><b>4. アラインメント</b><br>差分を元テキストと時間へ対応付け</div>
+  </div>
+  <p style="font-size:11px;color:#6b776f">辞書にない英数字・固有名詞をAIの推測だけで正解化しません。「期待読み未定義」として判定不能にします。</p>
+</div>
+
+<div class="section">
+  <h3>結果ステータス</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <div style="border-top:4px solid #577762;background:#fffdf8;padding:12px"><b>正常</b><p style="font-size:11px">機械差分なし、またはGeminiも一致を確認。</p></div>
+    <div style="border-top:4px solid #a45a4f;background:#fffdf8;padding:12px"><b>要確認</b><p style="font-size:11px">差分があり、音声上の根拠を取得。問題位置から再生可能。</p></div>
+    <div style="border-top:4px solid #9b8a66;background:#fffdf8;padding:12px"><b>判定不能</b><p style="font-size:11px">期待読み未定義、低信頼度、AI結果不一致、取得失敗など。</p></div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros"><h4>予防</h4><ul><li>辞書を正解契約として固定</li><li>誤ったTTS原稿を音声生成前に遮断可能</li><li>AI出力で契約を上書きしない</li></ul></div>
+  <div class="cons"><h4>検知・回避</h4><ul><li>既存音声は候補検出後に人が確認</li><li>不確実な結果を正常へ倒さない</li><li>未知語は辞書登録が必要</li></ul></div>
+</div>

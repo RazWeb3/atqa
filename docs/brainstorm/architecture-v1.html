@@ -1,0 +1,79 @@
+<h2>第2部 — システム構成</h2>
+<p class="subtitle">Next.jsをCloud Runへ配置し、Google Cloud内で音声認識とAIレビューを完結させます。</p>
+
+<div class="mockup" style="background:#f4f1e9;border-color:#d8d3c8">
+  <div class="mockup-body" style="padding:24px;color:#27322c">
+    <div style="display:grid;grid-template-columns:1fr 52px 1.25fr 52px 1fr;gap:10px;align-items:center">
+      <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:10px;padding:18px;text-align:center">
+        <div style="font:19px Georgia;margin-bottom:8px">Browser</div>
+        <div style="font-size:11px;line-height:1.9">JSON選択<br>連続プレイヤー<br>レビュー結果<br>問題位置から再生</div>
+      </div>
+      <div style="text-align:center;font-size:22px;color:#7c877f">⇄</div>
+      <div style="background:#fffdf8;border:2px solid #768e7e;border-radius:10px;padding:18px;text-align:center">
+        <div style="font:19px Georgia;margin-bottom:8px">Next.js on Cloud Run</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px">
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">JSON Validator</div>
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">Content Normalizer</div>
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">Audio Proxy</div>
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">QA Orchestrator</div>
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">Kana / Diff Engine</div>
+          <div style="background:#eef1eb;padding:8px;border-radius:6px">Result Contract</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:22px;color:#7c877f">⇄</div>
+      <div style="display:grid;gap:9px">
+        <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:9px;padding:11px;text-align:center"><b>Cloud Speech-to-Text</b><br><small>転写・信頼度・時間</small></div>
+        <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:9px;padding:11px;text-align:center"><b>Vertex AI Gemini Flash</b><br><small>音声レビュー・根拠</small></div>
+        <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:9px;padding:11px;text-align:center"><b>Convly CDN</b><br><small>既存MP3</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:22px">
+  <h3>2種類のデータを共通モデルへ変換</h3>
+  <div class="split">
+    <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:8px;padding:14px">
+      <b>document</b>
+      <p style="font-size:12px">documents[] → 1要素 = 1 PlaybackUnit</p>
+      <code style="font-size:11px">doc-1, displayText, expectedText, audioUrl</code>
+    </div>
+    <div style="background:#fffdf8;border:1px solid #d8d3c8;border-radius:8px;padding:14px">
+      <b>quiz</b>
+      <p style="font-size:12px">1問 → question + choices[] + explanation</p>
+      <code style="font-size:11px">q-1:question, q-1:choice:0 … q-1:explanation</code>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>選択した1ユニットのQA処理</h3>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px">
+    <span style="background:#eef1eb;padding:8px;border-radius:6px">CDNからMP3取得</span><b>→</b>
+    <span style="background:#eef1eb;padding:8px;border-radius:6px">STT転写</span><b>→</b>
+    <span style="background:#eef1eb;padding:8px;border-radius:6px">期待読みを正規化</span><b>→</b>
+    <span style="background:#eef1eb;padding:8px;border-radius:6px">機械差分</span><b>→</b>
+    <span style="background:#eef1eb;padding:8px;border-radius:6px">Gemini音声レビュー</span><b>→</b>
+    <span style="background:#355f49;color:white;padding:8px;border-radius:6px">正常 / 要確認 / 判定不能</span>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>構造的な予防</h4>
+    <ul>
+      <li>JSONはスキーマ検証後のみ処理</li>
+      <li>音声取得先はHTTPSかつ許可ホストのみ</li>
+      <li>AI出力は構造化JSONを再検証</li>
+      <li>秘密情報はブラウザへ送らない</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>明示する限界</h4>
+    <ul>
+      <li>ASRとGeminiが同時に補正する可能性</li>
+      <li>「合格保証」ではなく誤読候補抽出</li>
+      <li>音声CDN障害時は検査不能</li>
+    </ul>
+  </div>
+</div>
