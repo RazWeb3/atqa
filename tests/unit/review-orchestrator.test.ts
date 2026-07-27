@@ -3,6 +3,8 @@ import { reviewUnit } from "@/features/review/review-orchestrator.server";
 import type { PlaybackUnit } from "@/features/content/types";
 import type { GeminiReview } from "@/features/review/review-contract";
 import type { AudioFetchResult } from "@/features/audio/audio-fetcher.server";
+import type { SpeechWord } from "@/features/review/speech-recognizer.server";
+import type { WhitelistEntry } from "@/features/review/reading-whitelist";
 
 function createUnit(overrides: Partial<PlaybackUnit> = {}): PlaybackUnit {
   return {
@@ -19,7 +21,20 @@ function createUnit(overrides: Partial<PlaybackUnit> = {}): PlaybackUnit {
   };
 }
 
-function createDeps(gemini: GeminiReview, confidence = 0.95) {
+type DepsOptions = {
+  confidence?: number;
+  transcript?: string;
+  words?: SpeechWord[];
+  whitelist?: WhitelistEntry[];
+};
+
+function createDeps(gemini: GeminiReview, options: DepsOptions = {}) {
+  const {
+    confidence = 0.95,
+    transcript = "アイティープロジェクト",
+    words = [],
+    whitelist = [],
+  } = options;
   const fetchAudio = vi.fn(async (): Promise<AudioFetchResult> => ({
     body: new ArrayBuffer(8),
     contentType: "audio/mpeg",
@@ -28,12 +43,13 @@ function createDeps(gemini: GeminiReview, confidence = 0.95) {
     contentRange: null,
   }));
   const recognizeSpeech = vi.fn(async () => ({
-    transcript: "アイティープロジェクト",
+    transcript,
     confidence,
-    words: [],
+    words,
   }));
   const reviewAudioWithGemini = vi.fn(async () => gemini);
-  return { fetchAudio, recognizeSpeech, reviewAudioWithGemini };
+  const loadWhitelist = vi.fn(async () => whitelist);
+  return { fetchAudio, recognizeSpeech, reviewAudioWithGemini, loadWhitelist };
 }
 
 describe("reviewUnit assumed-reading mode (unknown tokens)", () => {
@@ -111,7 +127,7 @@ describe("reviewUnit assumed-reading mode (unknown tokens)", () => {
         startSec: null,
         endSec: null,
       },
-      0.4,
+      { confidence: 0.4 },
     );
 
     const result = await reviewUnit(unknownUnit(), deps);
@@ -137,6 +153,118 @@ describe("reviewUnit deterministic mode (defined reading)", () => {
     expect(deps.reviewAudioWithGemini).toHaveBeenCalledWith(
       expect.objectContaining({
         expectedReading: "あいてぃーぷろじぇくと",
+        unknownTokens: null,
+      }),
+    );
+    expect(result.status).toBe("pass");
+  });
+});
+
+describe("reviewUnit unclear-word detection (word-level confidence)", () => {
+  const matchGemini: GeminiReview = {
+    verdict: "match",
+    heardReading: null,
+    reason: "一致しています",
+    startSec: null,
+    endSec: null,
+  };
+
+  it("upgrades a passing unit to review when a low-confidence word exists", async () => {
+    const deps = createDeps(matchGemini, {
+      words: [
+        { text: "プロジェクト", confidence: 0.35, startSec: 1.0, endSec: 2.0 },
+      ],
+    });
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("review");
+    expect(result.audioReview[0]).toMatchObject({
+      code: "AUDIO_UNCLEAR_SUSPECT",
+      status: "review",
+      observed: "プロジェクト",
+      startSec: 1.0,
+      endSec: 2.0,
+    });
+    expect(result.audioReview[0].reason).toContain("0.35");
+  });
+
+  it("keeps a pass verdict when every word is confident", async () => {
+    const deps = createDeps(matchGemini, {
+      words: [
+        { text: "プロジェクト", confidence: 0.92, startSec: 1.0, endSec: 2.0 },
+      ],
+    });
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("pass");
+    expect(result.audioReview).toHaveLength(0);
+  });
+
+  it("suppresses unclear words already approved in the whitelist", async () => {
+    const deps = createDeps(matchGemini, {
+      words: [{ text: "ホゲ", confidence: 0.35, startSec: 1.0, endSec: 2.0 }],
+      whitelist: [
+        // Katakana word must match the hiragana reading after normalization.
+        { token: "hoge", reading: "ほげ", addedAt: "2026-07-27T00:00:00.000Z" },
+      ],
+    });
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("pass");
+    expect(result.audioReview).toHaveLength(0);
+  });
+
+  it("attaches unclear-word spans to the low-confidence gate result", async () => {
+    const deps = createDeps(matchGemini, {
+      confidence: 0.4,
+      words: [{ text: "ホゲ", confidence: 0.35, startSec: 1.0, endSec: 2.0 }],
+    });
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("inconclusive");
+    expect(result.audioReview[0].code).toBe("LOW_ASR_CONFIDENCE");
+    expect(result.audioReview[1]).toMatchObject({
+      code: "AUDIO_UNCLEAR_SUSPECT",
+      observed: "ホゲ",
+    });
+  });
+});
+
+describe("reviewUnit whitelist overlay (approved readings)", () => {
+  it("resolves unknown tokens deterministically via the whitelist", async () => {
+    const deps = createDeps(
+      {
+        verdict: "match",
+        heardReading: null,
+        reason: "一致しています",
+        startSec: null,
+        endSec: null,
+      },
+      {
+        transcript: "あんのうんつーる",
+        whitelist: [
+          {
+            token: "Unknown",
+            reading: "あんのうん",
+            addedAt: "2026-07-27T00:00:00.000Z",
+          },
+        ],
+      },
+    );
+
+    const result = await reviewUnit(
+      createUnit({ displayText: "Unknownツール" }),
+      deps,
+    );
+
+    // The overlay defines the reading, so assumed-reading mode is not needed.
+    expect(deps.reviewAudioWithGemini).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedReading: "あんのうんつーる",
         unknownTokens: null,
       }),
     );

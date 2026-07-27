@@ -6,6 +6,7 @@ export type IssueCode =
   | "OMISSION_SUSPECT"
   | "DUPLICATION_SUSPECT"
   | "UNDEFINED_READING"
+  | "AUDIO_UNCLEAR_SUSPECT"
   | "LOW_ASR_CONFIDENCE"
   | "ASR_GEMINI_CONFLICT"
   | "AUDIO_FETCH_FAILED"
@@ -22,6 +23,9 @@ export type ReviewIssue = {
   startSec: number | null;
   endSec: number | null;
   reason: string;
+  // Tokens without a deterministic reading, offered for one-click
+  // whitelist registration. Absent on issues not tied to specific tokens.
+  tokens?: string[] | null;
 };
 
 export type StageReview = {
@@ -78,6 +82,7 @@ export const ReviewResponseSchema = z.object({
       startSec: z.number().nullable(),
       endSec: z.number().nullable(),
       reason: z.string(),
+      tokens: z.array(z.string()).nullable().optional(),
     }),
   ),
   audioReview: z.array(
@@ -90,6 +95,7 @@ export const ReviewResponseSchema = z.object({
       startSec: z.number().nullable(),
       endSec: z.number().nullable(),
       reason: z.string(),
+      tokens: z.array(z.string()).nullable().optional(),
     }),
   ),
   asrTranscript: z.string().nullable(),

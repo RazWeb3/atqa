@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   ReviewIssue,
   ReviewResponse,
@@ -21,6 +21,9 @@ type ReviewPanelProps = {
   actionableCount: number;
   actionableRank: number | null;
   onJumpActionable: (direction: 1 | -1) => void;
+  // Tokens already approved in the reading whitelist.
+  whitelistedTokens: string[];
+  onWhitelistAdd: (token: string, reading: string) => void;
   onReview: () => void;
   onSeekAndPlay: (seconds: number) => void;
   onResolve: (resolution: HumanResolution) => void;
@@ -65,12 +68,107 @@ function SeekButton({
   );
 }
 
+// Inline registration row: approve a token's reading into the whitelist.
+// The reading is prefilled when the issue already tells us what was heard,
+// making approval effectively one click.
+function TokenRegisterRow({
+  token,
+  defaultReading,
+  registered,
+  onAdd,
+}: {
+  token: string;
+  defaultReading: string;
+  registered: boolean;
+  onAdd: (token: string, reading: string) => void;
+}) {
+  const [reading, setReading] = useState(defaultReading);
+
+  if (registered) {
+    return (
+      <p className="whitelist-registered" data-testid="whitelist-registered">
+        ✓ 「{token}」は登録済み（次回の検査から適用）
+      </p>
+    );
+  }
+
+  return (
+    <div className="whitelist-inline-form">
+      <span className="whitelist-token">{token}</span>
+      <input
+        type="text"
+        value={reading}
+        onChange={(e) => setReading(e.target.value)}
+        placeholder="読み (かな)"
+        aria-label={`「${token}」の読み`}
+      />
+      <button
+        type="button"
+        onClick={() => onAdd(token, reading.trim())}
+        disabled={reading.trim().length === 0}
+        className="btn btn-secondary btn-small"
+        data-testid={`whitelist-add-${token}`}
+      >
+        正常な読みとして登録
+      </button>
+    </div>
+  );
+}
+
+// Whitelist registration entry points attached to an issue. Unclear-word
+// findings carry the heard kana in `observed`; undefined-reading findings
+// carry the source tokens in `tokens`.
+function WhitelistActions({
+  issue,
+  whitelistedTokens,
+  onWhitelistAdd,
+}: {
+  issue: ReviewIssue;
+  whitelistedTokens: string[];
+  onWhitelistAdd: (token: string, reading: string) => void;
+}) {
+  if (issue.code === "AUDIO_UNCLEAR_SUSPECT" && issue.observed) {
+    return (
+      <TokenRegisterRow
+        token={issue.observed}
+        defaultReading={issue.observed}
+        registered={whitelistedTokens.includes(issue.observed)}
+        onAdd={onWhitelistAdd}
+      />
+    );
+  }
+
+  if (issue.tokens && issue.tokens.length > 0) {
+    return (
+      <div className="whitelist-actions">
+        {issue.tokens.map((token) => (
+          <TokenRegisterRow
+            key={token}
+            token={token}
+            defaultReading={
+              issue.tokens!.length === 1 ? (issue.observed ?? "") : ""
+            }
+            registered={whitelistedTokens.includes(token)}
+            onAdd={onWhitelistAdd}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function IssueItem({
   issue,
   onSeekAndPlay,
+  whitelistedTokens,
+  onWhitelistAdd,
 }: {
   issue: ReviewIssue;
   onSeekAndPlay: (seconds: number) => void;
+  whitelistedTokens: string[];
+  onWhitelistAdd: (token: string, reading: string) => void;
 }) {
   return (
     <li className="review-issue-item">
@@ -87,6 +185,11 @@ function IssueItem({
         </span>
       )}
       <SeekButton issue={issue} onSeekAndPlay={onSeekAndPlay} />
+      <WhitelistActions
+        issue={issue}
+        whitelistedTokens={whitelistedTokens}
+        onWhitelistAdd={onWhitelistAdd}
+      />
     </li>
   );
 }
@@ -100,6 +203,8 @@ export function ReviewPanel({
   actionableCount,
   actionableRank,
   onJumpActionable,
+  whitelistedTokens,
+  onWhitelistAdd,
   onReview,
   onSeekAndPlay,
   onResolve,
@@ -204,6 +309,11 @@ export function ReviewPanel({
               </p>
               <p className="primary-issue-reason">{primaryIssue.reason}</p>
               <SeekButton issue={primaryIssue} onSeekAndPlay={onSeekAndPlay} />
+              <WhitelistActions
+                issue={primaryIssue}
+                whitelistedTokens={whitelistedTokens}
+                onWhitelistAdd={onWhitelistAdd}
+              />
             </div>
           )}
 
@@ -257,6 +367,8 @@ export function ReviewPanel({
                         key={`s1-${i}`}
                         issue={issue}
                         onSeekAndPlay={onSeekAndPlay}
+                        whitelistedTokens={whitelistedTokens}
+                        onWhitelistAdd={onWhitelistAdd}
                       />
                     ))}
                   </ul>
@@ -273,6 +385,8 @@ export function ReviewPanel({
                         key={`s2-${i}`}
                         issue={issue}
                         onSeekAndPlay={onSeekAndPlay}
+                        whitelistedTokens={whitelistedTokens}
+                        onWhitelistAdd={onWhitelistAdd}
                       />
                     ))}
                   </ul>

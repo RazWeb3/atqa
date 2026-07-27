@@ -27,6 +27,7 @@ async function synthesizeTextToComparisonKana(
  */
 export async function reviewSynthesisText(
   unit: PlaybackUnit,
+  extraCorrections?: Record<string, string>,
 ): Promise<StageReview> {
   // If no synthesis text, skip Stage 1
   if (!unit.synthesisText) {
@@ -34,7 +35,10 @@ export async function reviewSynthesisText(
   }
 
   // Get canonical reading from display text
-  const canonical = await createCanonicalReading(unit.displayText);
+  const canonical = await createCanonicalReading(
+    unit.displayText,
+    extraCorrections,
+  );
 
   // If canonical reading is undefined, return inconclusive
   if (canonical.status === "undefined") {
@@ -47,6 +51,7 @@ export async function reviewSynthesisText(
       startSec: null,
       endSec: null,
       reason: `期待読みが未定義です: ${canonical.unknownTokens.join(", ")}`,
+      tokens: canonical.unknownTokens,
     };
     return { status: "inconclusive", issues: [issue] };
   }

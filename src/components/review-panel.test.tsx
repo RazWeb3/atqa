@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ReviewPanel } from "./review-panel";
@@ -39,6 +39,8 @@ describe("ReviewPanel", () => {
     actionableCount: 0,
     actionableRank: null as number | null,
     onJumpActionable: vi.fn(),
+    whitelistedTokens: [] as string[],
+    onWhitelistAdd: vi.fn(),
     onReview: vi.fn(),
     onSeekAndPlay: vi.fn(),
     onResolve: vi.fn(),
@@ -432,5 +434,130 @@ describe("ReviewPanel", () => {
     );
     expect(screen.getByTestId("next-actionable")).toBeDisabled();
     expect(screen.getByTestId("prev-actionable")).toBeDisabled();
+  });
+
+  describe("whitelist registration", () => {
+    const unclearReview = () =>
+      createReviewResponse({
+        status: "review",
+        audioReview: [
+          {
+            code: "AUDIO_UNCLEAR_SUSPECT",
+            status: "review",
+            sourceStage: "audio",
+            expected: null,
+            observed: "いっと",
+            startSec: 1.5,
+            endSec: 2.3,
+            reason: "音声認識の信頼度が低い語です (0.42)",
+          },
+        ],
+      });
+
+    const undefinedReadingReview = () =>
+      createReviewResponse({
+        status: "inconclusive",
+        audioReview: [
+          {
+            code: "UNDEFINED_READING",
+            status: "inconclusive",
+            sourceStage: "audio",
+            expected: null,
+            observed: "あんのうん",
+            startSec: null,
+            endSec: null,
+            reason: "AI推定読みでも判定できませんでした（辞書未登録: Unknown）",
+            tokens: ["Unknown"],
+          },
+        ],
+      });
+
+    it("registers the heard kana with one click for unclear-word issues", async () => {
+      const user = userEvent.setup();
+      const onWhitelistAdd = vi.fn();
+      render(
+        <ReviewPanel
+          {...defaultProps}
+          review={unclearReview()}
+          onWhitelistAdd={onWhitelistAdd}
+        />,
+      );
+
+      // The heard kana is prefilled, so registration is a single click.
+      const primary = within(screen.getByTestId("primary-issue"));
+      await user.click(primary.getByTestId("whitelist-add-いっと"));
+      expect(onWhitelistAdd).toHaveBeenCalledWith("いっと", "いっと");
+    });
+
+    it("registers a token from an undefined-reading issue with the observed reading prefilled", async () => {
+      const user = userEvent.setup();
+      const onWhitelistAdd = vi.fn();
+      render(
+        <ReviewPanel
+          {...defaultProps}
+          review={undefinedReadingReview()}
+          onWhitelistAdd={onWhitelistAdd}
+        />,
+      );
+
+      const primary = within(screen.getByTestId("primary-issue"));
+      await user.click(primary.getByTestId("whitelist-add-Unknown"));
+      expect(onWhitelistAdd).toHaveBeenCalledWith("Unknown", "あんのうん");
+    });
+
+    it("lets the user edit the reading before registering", async () => {
+      const user = userEvent.setup();
+      const onWhitelistAdd = vi.fn();
+      render(
+        <ReviewPanel
+          {...defaultProps}
+          review={undefinedReadingReview()}
+          onWhitelistAdd={onWhitelistAdd}
+        />,
+      );
+
+      const primary = within(screen.getByTestId("primary-issue"));
+      const input = primary.getByLabelText("「Unknown」の読み");
+      await user.clear(input);
+      await user.type(input, "うんのうん");
+      await user.click(primary.getByTestId("whitelist-add-Unknown"));
+      expect(onWhitelistAdd).toHaveBeenCalledWith("Unknown", "うんのうん");
+    });
+
+    it("disables the register button while the reading is empty", async () => {
+      const user = userEvent.setup();
+      render(<ReviewPanel {...defaultProps} review={undefinedReadingReview()} />);
+
+      const primary = within(screen.getByTestId("primary-issue"));
+      await user.clear(primary.getByLabelText("「Unknown」の読み"));
+      expect(primary.getByTestId("whitelist-add-Unknown")).toBeDisabled();
+    });
+
+    it("shows a registered notice instead of the form for whitelisted tokens", () => {
+      render(
+        <ReviewPanel
+          {...defaultProps}
+          review={undefinedReadingReview()}
+          whitelistedTokens={["Unknown"]}
+        />,
+      );
+
+      const primary = within(screen.getByTestId("primary-issue"));
+      expect(primary.getByTestId("whitelist-registered")).toHaveTextContent(
+        "「Unknown」は登録済み",
+      );
+      expect(
+        primary.queryByTestId("whitelist-add-Unknown"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not offer registration for issues without tokens or heard kana", () => {
+      render(<ReviewPanel {...defaultProps} review={createReviewResponse()} />);
+
+      const primary = within(screen.getByTestId("primary-issue"));
+      expect(
+        primary.queryByRole("button", { name: "正常な読みとして登録" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

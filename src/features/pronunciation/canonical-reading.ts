@@ -13,9 +13,28 @@ export type CanonicalReadingResult =
 type Correction = { key: string; reading: string };
 
 // Sort corrections by key length descending for longest-match-first
-const corrections: Correction[] = Object.entries(dictionary.corrections)
+const baseCorrections: Correction[] = Object.entries(dictionary.corrections)
   .map(([key, reading]) => ({ key, reading }))
   .sort((a, b) => b.key.length - a.key.length);
+
+/**
+ * Merge extra corrections (e.g. the human-approved reading whitelist) over
+ * the base dictionary. Extra entries win on key collisions.
+ */
+function buildCorrections(
+  extraCorrections?: Record<string, string>,
+): Correction[] {
+  if (!extraCorrections || Object.keys(extraCorrections).length === 0) {
+    return baseCorrections;
+  }
+  const merged: Record<string, string> = {
+    ...dictionary.corrections,
+    ...extraCorrections,
+  };
+  return Object.entries(merged)
+    .map(([key, reading]) => ({ key, reading }))
+    .sort((a, b) => b.key.length - a.key.length);
+}
 
 // Pattern to detect remaining Latin tokens after dictionary replacement
 const LATIN_TOKEN_PATTERN = /[A-Za-z][A-Za-z0-9._-]*/g;
@@ -74,7 +93,10 @@ function spellOutAcronym(token: string): string {
  * non-overlapping replacement.
  * Returns the text with replacements and a map of replaced ranges.
  */
-function applyDictionaryCorrections(text: string): {
+function applyDictionaryCorrections(
+  text: string,
+  corrections: Correction[],
+): {
   result: string;
   replacedRanges: Array<{ start: number; end: number }>;
 } {
@@ -171,10 +193,13 @@ function extractJapaneseSpans(
  */
 export async function createCanonicalReading(
   displayText: string,
+  extraCorrections?: Record<string, string>,
 ): Promise<CanonicalReadingResult> {
+  const corrections = buildCorrections(extraCorrections);
+
   // Step 1: Apply dictionary corrections
   const { replacedRanges } =
-    applyDictionaryCorrections(displayText);
+    applyDictionaryCorrections(displayText, corrections);
 
   // Step 2: Extract Japanese spans that weren't replaced
   const japaneseSpans = extractJapaneseSpans(displayText, replacedRanges);

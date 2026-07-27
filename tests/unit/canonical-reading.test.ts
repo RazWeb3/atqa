@@ -95,4 +95,25 @@ describe("createCanonicalReading", () => {
       expect(result.comparison).not.toContain("、");
     }
   });
+
+  it("resolves unknown tokens through the extra-corrections overlay", async () => {
+    const result = await createCanonicalReading("Unknown製品", {
+      Unknown: "あんのうん",
+    });
+    expect(result).toMatchObject({ status: "defined" });
+    if (result.status === "defined") {
+      expect(result.comparison).toContain("あんのうん");
+    }
+  });
+
+  it("lets extra corrections override dictionary readings", async () => {
+    // PMBOK is ピンボック in the base dictionary; the overlay wins.
+    const result = await createCanonicalReading("PMBOK", {
+      PMBOK: "ぴむぼく",
+    });
+    expect(result).toMatchObject({
+      status: "defined",
+      comparison: "ぴむぼく",
+    });
+  });
 });

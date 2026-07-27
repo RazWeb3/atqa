@@ -1,11 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import type {
   NormalizedContent,
   PlaybackUnit,
 } from "@/features/content/types";
 import type { ReviewResponse } from "@/features/review/review-contract";
+import type { WhitelistEntry } from "@/features/review/reading-whitelist";
 import {
   deriveUnitStatus,
   findAdjacentActionable,
@@ -20,6 +28,7 @@ import { SectionNav } from "./section-nav";
 import { TransportControls } from "./transport-controls";
 import { StatusSummary } from "./status-summary";
 import { ReviewPanel } from "./review-panel";
+import { ReadingWhitelistPanel } from "./reading-whitelist-panel";
 
 type ReviewWorkspaceProps = {
   content: NormalizedContent;
@@ -55,6 +64,64 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
   );
   // Set to true to stop workers from picking up queued units.
   const batchCancelRef = useRef(false);
+
+  // Human-approved readings. Server-persisted; affects future reviews only.
+  const [whitelist, setWhitelist] = useState<WhitelistEntry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/whitelist");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) setWhitelist(data.entries ?? []);
+      } catch {
+        // The whitelist is an enhancement; reviews work without it.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleWhitelistAdd = useCallback(
+    async (token: string, reading: string) => {
+      try {
+        const response = await fetch("/api/whitelist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, reading }),
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setWhitelist(data.entries ?? []);
+      } catch {
+        // Keep the current list on network failure.
+      }
+    },
+    [],
+  );
+
+  const handleWhitelistRemove = useCallback(async (token: string) => {
+    try {
+      const response = await fetch("/api/whitelist", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      setWhitelist(data.entries ?? []);
+    } catch {
+      // Keep the current list on network failure.
+    }
+  }, []);
+
+  const whitelistedTokens = useMemo(
+    () => whitelist.map((entry) => entry.token),
+    [whitelist],
+  );
 
   const selectedUnit = units[player.state.unitIndex];
 
@@ -311,6 +378,12 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
               )}
             </article>
           )}
+
+          <ReadingWhitelistPanel
+            entries={whitelist}
+            onAdd={handleWhitelistAdd}
+            onRemove={handleWhitelistRemove}
+          />
         </main>
 
         <ReviewPanel
@@ -322,6 +395,8 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
           actionableCount={actionableCount}
           actionableRank={actionableRank}
           onJumpActionable={handleJumpActionable}
+          whitelistedTokens={whitelistedTokens}
+          onWhitelistAdd={handleWhitelistAdd}
           onReview={handleReviewSelected}
           onSeekAndPlay={player.seekAndPlay}
           onResolve={handleResolve}

@@ -130,6 +130,7 @@ export const ISSUE_CODE_LABELS: Record<string, string> = {
   OMISSION_SUSPECT: "読み飛ばしの疑い",
   DUPLICATION_SUSPECT: "重複読みの疑い",
   UNDEFINED_READING: "読み未定義の語",
+  AUDIO_UNCLEAR_SUSPECT: "聞き取りにくい箇所",
   LOW_ASR_CONFIDENCE: "音声認識の信頼度低",
   ASR_GEMINI_CONFLICT: "判定根拠の不一致",
   AUDIO_FETCH_FAILED: "音声取得の失敗",
