@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import type { NormalizedContent, PlaybackUnit } from "@/features/content/types";
 import type { ReviewResponse } from "@/features/review/review-contract";
 import documentFixture from "../fixtures/document.json";
@@ -150,6 +150,29 @@ const reviewInconclusiveResponse: ReviewResponse = {
   asrConfidence: 0.45,
 };
 
+// Import a fixture file and wait for the workspace to appear. The dev
+// server can serve HTML before React hydration finishes, in which case the
+// file input's change handler is not attached yet and the event is lost;
+// retry the import until the workspace renders.
+async function importFixtureFile(
+  page: Page,
+  name: string,
+  fixture: unknown,
+  readyText: RegExp,
+) {
+  const fileInput = page.locator('input[type="file"]');
+  await expect(async () => {
+    await fileInput.setInputFiles({
+      name,
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(fixture)),
+    });
+    await expect(page.getByText(readyText).first()).toBeVisible({
+      timeout: 3000,
+    });
+  }).toPass({ timeout: 30000 });
+}
+
 test.describe("ATQA E2E Journey", () => {
   test.beforeEach(async ({ page }) => {
     // Intercept normalize API
@@ -217,16 +240,8 @@ test.describe("ATQA E2E Journey", () => {
 
     await page.goto("/");
 
-    // Step 1: Import document JSON
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "document.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(documentFixture)),
-    });
-
-    // Step 2: Assert 42 units (document has 42 documents)
-    await expect(page.getByText(/42ユニット/)).toBeVisible({ timeout: 10000 });
+    // Step 1: Import document JSON and wait for 42 units
+    await importFixtureFile(page, "document.json", documentFixture, /42ユニット/);
 
     // Step 3: Select doc-1 (should be selected by default)
     await expect(page.getByText("ITパスポートの学習では")).toBeVisible();
@@ -242,19 +257,27 @@ test.describe("ATQA E2E Journey", () => {
     const reviewButton = page.getByRole("button", { name: "この音声をAI検査" });
     await reviewButton.click();
 
-    // Step 6: See expected アイティー and heard イット
+    // Step 6: Primary issue summary is visible without scrolling context
     await expect(page.getByTestId("review-status")).toHaveText("要確認", {
       timeout: 10000,
     });
+    await expect(page.getByTestId("primary-issue")).toContainText(
+      "発音の疑い",
+    );
+
+    // Expand the collapsed evidence and see あいてぃー / いっと
+    await page.getByText("詳細な根拠を見る").click();
     await expect(page.getByText("あいてぃー")).toBeVisible();
     await expect(page.getByText("いっと")).toBeVisible();
 
-    // Step 7: Seek from the issue
-    const seekButton = page.getByRole("button", { name: /問題位置から再生/ });
+    // Step 7: Seek and play from the primary issue
+    const seekButton = page
+      .getByRole("button", { name: /問題位置から再生/ })
+      .first();
     await expect(seekButton).toBeVisible();
     await seekButton.click();
 
-    // Step 8: Assert counters
+    // Step 8: Assert counters (検査済み 1 / 42)
     await expect(page.getByText("検査済み")).toBeVisible();
     await expect(page.locator(".status-summary")).toContainText("1");
 
@@ -267,16 +290,8 @@ test.describe("ATQA E2E Journey", () => {
   }) => {
     await page.goto("/");
 
-    // Import quiz JSON
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "quiz.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(quizFixture)),
-    });
-
-    // Assert 30 questions
-    await expect(page.getByText(/30問/)).toBeVisible({ timeout: 10000 });
+    // Import quiz JSON and assert 30 questions
+    await importFixtureFile(page, "quiz.json", quizFixture, /30問/);
 
     // Assert 180 units (30 questions * 6 units each)
     await expect(page.getByText(/180ユニット/)).toBeVisible();
@@ -300,15 +315,8 @@ test.describe("ATQA E2E Journey", () => {
 
     await page.goto("/");
 
-    // Import document
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "document.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(documentFixture)),
-    });
-
-    await expect(page.getByText(/42ユニット/)).toBeVisible({ timeout: 10000 });
+    // Import document and wait for 42 units
+    await importFixtureFile(page, "document.json", documentFixture, /42ユニット/);
 
     // Run review
     await page.getByRole("button", { name: "この音声をAI検査" }).click();
@@ -320,7 +328,7 @@ test.describe("ATQA E2E Journey", () => {
     await expect(page.getByText("正常")).not.toBeVisible();
   });
 
-  test("human resolution is separate from AI verdict", async ({ page }) => {
+  test("human judgment is separate from AI verdict", async ({ page }) => {
     // Intercept reviews API
     await page.route("**/api/reviews", async (route) => {
       await route.fulfill({
@@ -332,15 +340,8 @@ test.describe("ATQA E2E Journey", () => {
 
     await page.goto("/");
 
-    // Import document
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "document.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(documentFixture)),
-    });
-
-    await expect(page.getByText(/42ユニット/)).toBeVisible({ timeout: 10000 });
+    // Import document and wait for 42 units
+    await importFixtureFile(page, "document.json", documentFixture, /42ユニット/);
 
     // Run review
     await page.getByRole("button", { name: "この音声をAI検査" }).click();
@@ -348,14 +349,14 @@ test.describe("ATQA E2E Journey", () => {
       timeout: 10000,
     });
 
-    // Mark as resolved
-    await page.getByRole("button", { name: "確認済みにする" }).click();
+    // Record the human judgment as a confirmed issue
+    await page.getByRole("button", { name: "問題ありと確認" }).click();
 
     // AI verdict should still show 要確認
     await expect(page.getByTestId("review-status")).toContainText("要確認");
 
-    // But human resolution badge should appear
-    await expect(page.getByText("✓ 確認済み")).toBeVisible();
+    // But the human judgment badge should appear
+    await expect(page.getByText("✓ 問題ありと確認")).toBeVisible();
   });
 
   test("duplicate review clicks create only one request", async ({ page }) => {
@@ -374,15 +375,8 @@ test.describe("ATQA E2E Journey", () => {
 
     await page.goto("/");
 
-    // Import document
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "document.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(documentFixture)),
-    });
-
-    await expect(page.getByText(/42ユニット/)).toBeVisible({ timeout: 10000 });
+    // Import document and wait for 42 units
+    await importFixtureFile(page, "document.json", documentFixture, /42ユニット/);
 
     // Click review button multiple times rapidly.
     // While pending, the button label changes to 検査中... and it is disabled,
@@ -400,5 +394,38 @@ test.describe("ATQA E2E Journey", () => {
 
     // Only one request should have been made
     expect(requestCount).toBe(1);
+  });
+
+  test("batch review runs all units with progress and updates the summary", async ({
+    page,
+  }) => {
+    let requestCount = 0;
+
+    await page.route("**/api/reviews", async (route) => {
+      requestCount++;
+      const unitId = route.request().postDataJSON()?.unit?.id ?? "doc-1";
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...reviewPassResponse, unitId }),
+      });
+    });
+
+    await page.goto("/");
+
+    // Import document and wait for 42 units
+    await importFixtureFile(page, "document.json", documentFixture, /42ユニット/);
+
+    // Start the batch review
+    await page.getByTestId("batch-start").click();
+
+    // All 42 units end up reviewed
+    await expect(page.locator(".status-summary")).toContainText("42 / 42", {
+      timeout: 30000,
+    });
+    expect(requestCount).toBe(42);
+
+    // Batch controls return to idle and nothing is left to review
+    await expect(page.getByTestId("batch-start")).toBeDisabled();
   });
 });

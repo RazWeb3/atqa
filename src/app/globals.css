@@ -198,7 +198,9 @@ button {
 
 /* Review Workspace */
 .review-workspace {
-  margin-top: 2rem;
+  margin-top: 1rem;
+  /* Keep the fixed transport dock from covering content. */
+  padding-bottom: 7.5rem;
 }
 
 .workspace-header {
@@ -212,14 +214,36 @@ button {
   margin-bottom: 1.5rem;
 }
 
+.workspace-brand {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
 .workspace-title h2 {
   font-size: 1.25rem;
   margin-bottom: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 .workspace-title p {
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+.workspace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.batch-progress {
+  font-size: 0.875rem;
+  color: var(--action);
+  font-weight: 500;
 }
 
 .workspace-body {
@@ -244,10 +268,24 @@ button {
   overflow-y: auto;
 }
 
+.section-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .section-nav h3 {
   font-size: 0.875rem;
   color: var(--muted);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
+}
+
+.nav-empty {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  padding: 0.5rem 0;
 }
 
 .nav-list {
@@ -262,7 +300,8 @@ button {
 
 .nav-group-header {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.75rem;
   background: transparent;
@@ -271,6 +310,14 @@ button {
   text-align: left;
   font-size: 0.875rem;
   color: var(--ink);
+}
+
+.nav-group-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-group-header:hover {
@@ -295,6 +342,7 @@ button {
 
 .nav-item {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   width: 100%;
   padding: 0.375rem 0.5rem;
@@ -304,6 +352,14 @@ button {
   text-align: left;
   font-size: 0.8125rem;
   color: var(--muted);
+}
+
+.nav-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-item:hover {
@@ -319,6 +375,42 @@ button {
   font-size: 0.6875rem;
   text-transform: uppercase;
   opacity: 0.6;
+}
+
+/* Unit status chips (label + color, not color alone) */
+.nav-status {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+}
+
+.nav-status-pass {
+  background: #e8f5e9;
+  color: var(--action);
+}
+
+.nav-status-review,
+.nav-status-failed {
+  background: #fdf2f0;
+  color: var(--review);
+}
+
+.nav-status-inconclusive {
+  background: #f5f0e6;
+  color: var(--inconclusive);
+}
+
+.nav-status-reviewing {
+  background: #e7efe9;
+  color: var(--action);
+}
+
+.nav-group-header.selected .nav-status {
+  background: rgba(255, 255, 255, 0.85);
 }
 
 /* Unit Display */
@@ -354,6 +446,37 @@ button {
   padding: 0.75rem;
   border-radius: 6px;
   margin-bottom: 1.5rem;
+}
+
+/* Transport Dock (fixed bottom bar) */
+.transport-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 0.75rem 1.5rem calc(0.75rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -2px 12px rgba(39, 50, 44, 0.08);
+}
+
+.transport-dock .transport-controls {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-top: none;
+  padding-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.transport-dock .transport-status,
+.transport-dock .transport-buttons,
+.transport-dock .transport-options {
+  margin-bottom: 0;
 }
 
 /* Transport Controls */
@@ -412,6 +535,12 @@ button {
   display: block;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.status-total {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .status-review .status-value {
@@ -554,14 +683,66 @@ button {
   margin-top: 0.25rem;
 }
 
-.human-resolution {
+/* Primary issue: always-visible conclusion */
+.primary-issue {
+  margin-bottom: 1rem;
+}
+
+.primary-issue-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--review);
+  margin-bottom: 0.25rem;
+}
+
+.primary-issue-reason {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.primary-issue .btn-seek {
+  margin-top: 0;
+}
+
+/* Collapsed technical evidence */
+.review-details {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--line);
+}
+
+.review-details summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.review-details summary:hover {
+  color: var(--ink);
+}
+
+.human-resolution {
+  margin-top: 0.5rem;
+}
+
+.resolution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .resolution-badge {
   color: var(--action);
   font-weight: 500;
   font-size: 0.875rem;
+}
+
+.resolution-dismissed_issue {
+  color: var(--muted);
 }

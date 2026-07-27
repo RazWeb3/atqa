@@ -15,7 +15,7 @@ export type ContinuousPlayer = {
   previous: () => void;
   next: () => void;
   select: (index: number) => void;
-  seek: (seconds: number) => void;
+  seekAndPlay: (seconds: number) => void;
   setContinuous: (enabled: boolean) => void;
 };
 
@@ -155,12 +155,53 @@ export function useContinuousPlayer(
     dispatch({ type: "SELECT_UNIT", index });
   }, []);
 
-  const seek = useCallback((seconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = seconds;
-    dispatch({ type: "TIME", currentTimeSec: seconds });
-  }, []);
+  // Seek and play as a single operation so "問題位置から再生" always
+  // produces audible playback, even before the unit's audio is loaded.
+  const seekAndPlay = useCallback(
+    (seconds: number) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const applySeekAndPlay = () => {
+        audio.currentTime = seconds;
+        dispatch({ type: "TIME", currentTimeSec: seconds });
+        audio
+          .play()
+          .then(() => dispatch({ type: "PLAY" }))
+          .catch(() =>
+            dispatch({
+              type: "AUDIO_ERROR",
+              message: "再生を開始できませんでした",
+            }),
+          );
+      };
+
+      const waitThenApply = () => {
+        const handleCanPlay = () => {
+          audio.removeEventListener("canplay", handleCanPlay);
+          applySeekAndPlay();
+        };
+        audio.addEventListener("canplay", handleCanPlay);
+      };
+
+      if (state.status === "idle" || state.status === "completed") {
+        // Audio for the current unit has not been loaded yet; trigger the
+        // load effect and seek once the audio is playable.
+        autoplayNextRef.current = false;
+        dispatch({ type: "LOAD", index: state.unitIndex });
+        waitThenApply();
+        return;
+      }
+
+      if (audio.readyState < 2) {
+        waitThenApply();
+        return;
+      }
+
+      applySeekAndPlay();
+    },
+    [state.status, state.unitIndex],
+  );
 
   const setContinuous = useCallback((enabled: boolean) => {
     dispatch({ type: "SET_CONTINUOUS", enabled });
@@ -173,7 +214,7 @@ export function useContinuousPlayer(
     previous,
     next,
     select,
-    seek,
+    seekAndPlay,
     setContinuous,
   };
 }

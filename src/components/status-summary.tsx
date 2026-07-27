@@ -4,9 +4,10 @@ import type { ReviewResponse } from "@/features/review/review-contract";
 
 type StatusSummaryProps = {
   reviews: Record<string, ReviewResponse>;
+  totalCount: number;
 };
 
-export function StatusSummary({ reviews }: StatusSummaryProps) {
+export function StatusSummary({ reviews, totalCount }: StatusSummaryProps) {
   const reviewValues = Object.values(reviews);
 
   const inspectedCount = reviewValues.length;
@@ -21,7 +22,10 @@ export function StatusSummary({ reviews }: StatusSummaryProps) {
     <div className="status-summary" aria-label="検査状況">
       <div className="status-item">
         <span className="status-label">検査済み</span>
-        <span className="status-value">{inspectedCount}</span>
+        <span className="status-value">
+          {inspectedCount}
+          <span className="status-total"> / {totalCount}</span>
+        </span>
       </div>
       <div className="status-item status-review">
         <span className="status-label">要確認</span>

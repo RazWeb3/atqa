@@ -18,17 +18,20 @@ export default function Page() {
 
   return (
     <main className="container">
-      <header className="app-header">
-        <h1 className="hero-title">音声を、聴くべき場所だけに。</h1>
-        <p className="hero-subtitle">
-          ATQA — Autonomous TTS Quality Assurance Agent
-        </p>
-      </header>
-
       {content ? (
         <ReviewWorkspace content={content} onReset={handleReset} />
       ) : (
-        <ImportPanel onImport={handleImport} />
+        <>
+          {/* The hero copy only earns its space before a file is loaded;
+              the workspace shows a compact header instead. */}
+          <header className="app-header">
+            <h1 className="hero-title">音声を、聴くべき場所だけに。</h1>
+            <p className="hero-subtitle">
+              ATQA — Autonomous TTS Quality Assurance Agent
+            </p>
+          </header>
+          <ImportPanel onImport={handleImport} />
+        </>
       )}
     </main>
   );

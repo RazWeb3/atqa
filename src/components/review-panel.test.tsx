@@ -33,10 +33,12 @@ describe("ReviewPanel", () => {
   const defaultProps = {
     review: undefined as ReviewResponse | undefined,
     isReviewing: false,
-    humanResolved: false,
+    isQueued: false,
+    failed: false,
+    resolution: null,
     onReview: vi.fn(),
-    onSeek: vi.fn(),
-    onMarkResolved: vi.fn(),
+    onSeekAndPlay: vi.fn(),
+    onResolve: vi.fn(),
   };
 
   it("renders review button", () => {
@@ -52,11 +54,27 @@ describe("ReviewPanel", () => {
     expect(button).toBeDisabled();
   });
 
+  it("disables button while queued", () => {
+    render(<ReviewPanel {...defaultProps} isQueued={true} />);
+    const button = screen.getByRole("button", { name: "検査待機中..." });
+    expect(button).toBeDisabled();
+  });
+
   it("shows progress status while reviewing", () => {
     render(<ReviewPanel {...defaultProps} isReviewing={true} />);
     expect(screen.getByRole("status")).toHaveTextContent(
       "検査を実行しています...",
     );
+  });
+
+  it("shows failure alert with retry label when failed", () => {
+    render(<ReviewPanel {...defaultProps} failed={true} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "AI検査に失敗しました",
+    );
+    expect(
+      screen.getByRole("button", { name: "もう一度AI検査" }),
+    ).toBeInTheDocument();
   });
 
   it("calls onReview when button clicked", async () => {
@@ -115,10 +133,20 @@ describe("ReviewPanel", () => {
     expect(status).not.toHaveClass("status-pass");
   });
 
-  it("displays expected and heard readings in Stage 2", () => {
+  it("shows the primary issue summary with a readable label", () => {
     const review = createReviewResponse();
     render(<ReviewPanel {...defaultProps} review={review} />);
 
+    const primary = screen.getByTestId("primary-issue");
+    expect(primary).toHaveTextContent("発音の疑い");
+    expect(primary).toHaveTextContent("発音の不一致が検出されました");
+  });
+
+  it("displays expected and heard readings inside the details section", () => {
+    const review = createReviewResponse();
+    render(<ReviewPanel {...defaultProps} review={review} />);
+
+    expect(screen.getByTestId("review-details")).toBeInTheDocument();
     expect(screen.getByText("Stage 2: 実音声QA")).toBeInTheDocument();
     expect(screen.getByText("あいてぃー")).toBeInTheDocument();
     expect(screen.getByText("いっと")).toBeInTheDocument();
@@ -147,16 +175,24 @@ describe("ReviewPanel", () => {
     expect(screen.getByText("Stage 2: 実音声QA")).toBeInTheDocument();
   });
 
-  it("calls onSeek with startSec when seek button clicked", async () => {
+  it("calls onSeekAndPlay with startSec when the primary seek button is clicked", async () => {
     const user = userEvent.setup();
-    const onSeek = vi.fn();
+    const onSeekAndPlay = vi.fn();
     const review = createReviewResponse();
-    render(<ReviewPanel {...defaultProps} review={review} onSeek={onSeek} />);
-
-    await user.click(
-      screen.getByRole("button", { name: /問題位置から再生/ }),
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        review={review}
+        onSeekAndPlay={onSeekAndPlay}
+      />,
     );
-    expect(onSeek).toHaveBeenCalledWith(1.5);
+
+    // Primary summary and details both expose the button; use the first.
+    const buttons = screen.getAllByRole("button", {
+      name: /問題位置から再生/,
+    });
+    await user.click(buttons[0]);
+    expect(onSeekAndPlay).toHaveBeenCalledWith(1.5);
   });
 
   it("does not show seek button when startSec is null", () => {
@@ -191,60 +227,80 @@ describe("ReviewPanel", () => {
     expect(screen.getByText(/92\.0%/)).toBeInTheDocument();
   });
 
-  it("shows resolve button for non-pass status", () => {
+  it("shows both judgment buttons for non-pass status", () => {
     const review = createReviewResponse({ status: "review" });
     render(<ReviewPanel {...defaultProps} review={review} />);
 
-    expect(screen.getByTestId("resolve-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("confirm-issue-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("dismiss-issue-btn")).toBeInTheDocument();
   });
 
-  it("does not show resolve button for pass status", () => {
+  it("does not show judgment buttons for pass status", () => {
     const review = createReviewResponse({
       status: "pass",
       audioReview: [],
     });
     render(<ReviewPanel {...defaultProps} review={review} />);
 
-    expect(screen.queryByTestId("resolve-btn")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("confirm-issue-btn")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dismiss-issue-btn")).not.toBeInTheDocument();
   });
 
-  it("calls onMarkResolved when resolve button clicked", async () => {
+  it("calls onResolve with confirmed_issue when confirm button clicked", async () => {
     const user = userEvent.setup();
-    const onMarkResolved = vi.fn();
+    const onResolve = vi.fn();
+    const review = createReviewResponse({ status: "review" });
+    render(
+      <ReviewPanel {...defaultProps} review={review} onResolve={onResolve} />,
+    );
+
+    await user.click(screen.getByTestId("confirm-issue-btn"));
+    expect(onResolve).toHaveBeenCalledWith("confirmed_issue");
+  });
+
+  it("calls onResolve with dismissed_issue when dismiss button clicked", async () => {
+    const user = userEvent.setup();
+    const onResolve = vi.fn();
+    const review = createReviewResponse({ status: "review" });
+    render(
+      <ReviewPanel {...defaultProps} review={review} onResolve={onResolve} />,
+    );
+
+    await user.click(screen.getByTestId("dismiss-issue-btn"));
+    expect(onResolve).toHaveBeenCalledWith("dismissed_issue");
+  });
+
+  it("shows resolution badge when a judgment has been recorded", () => {
     const review = createReviewResponse({ status: "review" });
     render(
       <ReviewPanel
         {...defaultProps}
         review={review}
-        onMarkResolved={onMarkResolved}
+        resolution="confirmed_issue"
       />,
     );
 
-    await user.click(screen.getByTestId("resolve-btn"));
-    expect(onMarkResolved).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows resolved badge when humanResolved is true", () => {
-    const review = createReviewResponse({ status: "review" });
-    render(
-      <ReviewPanel {...defaultProps} review={review} humanResolved={true} />,
-    );
-
     expect(screen.getByTestId("resolved-badge")).toHaveTextContent(
-      "✓ 確認済み",
+      "✓ 問題ありと確認",
     );
-    expect(screen.queryByTestId("resolve-btn")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("confirm-issue-btn")).not.toBeInTheDocument();
   });
 
-  it("human resolution does not change ReviewStatus display", () => {
+  it("human judgment does not change ReviewStatus display", () => {
     const review = createReviewResponse({ status: "review" });
     render(
-      <ReviewPanel {...defaultProps} review={review} humanResolved={true} />,
+      <ReviewPanel
+        {...defaultProps}
+        review={review}
+        resolution="dismissed_issue"
+      />,
     );
 
-    // Status still shows 要確認 even though human resolved
+    // Status still shows 要確認 even though a human judgment exists
     expect(screen.getByTestId("review-status")).toHaveTextContent("要確認");
-    expect(screen.getByTestId("resolved-badge")).toBeInTheDocument();
+    expect(screen.getByTestId("resolved-badge")).toHaveTextContent(
+      "✓ 誤検知として棄却",
+    );
   });
 
   it("has no quality score anywhere", () => {
