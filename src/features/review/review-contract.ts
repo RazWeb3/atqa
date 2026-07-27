@@ -57,13 +57,27 @@ export const ReviewRequestSchema = z.object({
   }),
 });
 
-// Zod schema for Gemini review output
+// A single mismatch location reported by Gemini. One unit can carry
+// several findings when the audio misreads more than one spot.
+export const GeminiFindingSchema = z.object({
+  heardReading: z.string(),
+  reason: z.string().max(300),
+  startSec: z.number().min(0).nullable(),
+  endSec: z.number().min(0).nullable(),
+});
+
+export type GeminiFinding = z.infer<typeof GeminiFindingSchema>;
+
+// Zod schema for Gemini review output. The top-level heardReading/time
+// fields keep the most prominent finding; `findings` lists every location.
+// Optional so responses without the field still validate.
 export const GeminiReviewSchema = z.object({
   verdict: z.enum(["match", "mismatch", "inconclusive"]),
   heardReading: z.string().nullable(),
   reason: z.string().max(300),
   startSec: z.number().min(0).nullable(),
   endSec: z.number().min(0).nullable(),
+  findings: z.array(GeminiFindingSchema).nullable().optional(),
 });
 
 export type GeminiReview = z.infer<typeof GeminiReviewSchema>;

@@ -43,6 +43,43 @@ describe("GeminiReviewer", () => {
       expect(result.success).toBe(true);
     });
 
+    it("accepts a mismatch response with multiple findings", () => {
+      const result = GeminiReviewSchema.safeParse({
+        verdict: "mismatch",
+        heardReading: "ひとだんらく",
+        reason: "複数の誤読が検出されました",
+        startSec: 3.2,
+        endSec: 4.0,
+        findings: [
+          {
+            heardReading: "ひとだんらく",
+            reason: "一段落の誤読",
+            startSec: 3.2,
+            endSec: 4.0,
+          },
+          {
+            heardReading: "かつぎます",
+            reason: "担いますの誤読",
+            startSec: 7.5,
+            endSec: 8.3,
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects a finding without heardReading", () => {
+      const result = GeminiReviewSchema.safeParse({
+        verdict: "mismatch",
+        heardReading: "ひとだんらく",
+        reason: "test",
+        startSec: 3.2,
+        endSec: 4.0,
+        findings: [{ reason: "読みなし", startSec: 1.0, endSec: 2.0 }],
+      });
+      expect(result.success).toBe(false);
+    });
+
     it("rejects markdown fences in response", () => {
       const invalidJson = '```json\n{"verdict": "match"}\n```';
       expect(() => JSON.parse(invalidJson)).toThrow();

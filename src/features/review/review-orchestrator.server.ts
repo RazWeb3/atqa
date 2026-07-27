@@ -3,7 +3,10 @@ import {
   alignReadings,
   hasDifferences,
 } from "@/features/pronunciation/align-readings";
-import { createCanonicalReading } from "@/features/pronunciation/canonical-reading";
+import {
+  convertTextToComparisonReading,
+  createCanonicalReading,
+} from "@/features/pronunciation/canonical-reading";
 import { normalizeComparisonKana } from "@/features/pronunciation/kana";
 import { reviewSynthesisText } from "./synthesis-review";
 import { fetchAudio } from "@/features/audio/audio-fetcher.server";
@@ -16,6 +19,7 @@ import {
   ModelOutputInvalidError,
 } from "./gemini-reviewer.server";
 import type {
+  GeminiFinding,
   GeminiReview,
   ReviewIssue,
   ReviewResponse,
@@ -166,9 +170,15 @@ export async function reviewUnit(
     };
   }
 
-  // Normalize STT transcript and align with expected reading. In
-  // assumed-reading mode there is no expected reading to align against.
-  const sttComparison = normalizeComparisonKana(sttResult.transcript);
+  // Normalize STT transcript and align with expected reading. Cloud STT
+  // writes Japanese back in kanji (auto-normalizing misreads in the
+  // process), so the transcript goes through the same dictionary +
+  // kuromoji + letterwise-acronym pipeline as the expected reading;
+  // otherwise kanji and Latin tokens would flag everything as different.
+  const sttComparison = await convertTextToComparisonReading(
+    sttResult.transcript,
+    extraCorrections,
+  );
   const edits =
     expectedComparison !== null
       ? alignReadings(expectedComparison, sttComparison)
@@ -222,11 +232,7 @@ export async function reviewUnit(
       ? determineAssumedVerdict(geminiResult, unknownTokens)
       : determineVerdict(
           sttHasDifferences,
-          geminiResult.verdict,
-          geminiResult.heardReading,
-          geminiResult.startSec,
-          geminiResult.endSec,
-          geminiResult.reason,
+          geminiResult,
           expectedComparison ?? "",
           sttComparison,
         );
@@ -285,6 +291,28 @@ function detectUnclearWords(
 }
 
 /**
+ * Collect every mismatch location from a Gemini review. Falls back to the
+ * single top-level heardReading/time fields when the findings array is
+ * absent or empty, so older-style responses still yield one issue.
+ */
+function collectFindings(gemini: GeminiReview): GeminiFinding[] {
+  if (gemini.findings && gemini.findings.length > 0) {
+    return gemini.findings;
+  }
+  if (gemini.heardReading) {
+    return [
+      {
+        heardReading: gemini.heardReading,
+        reason: gemini.reason,
+        startSec: gemini.startSec,
+        endSec: gemini.endSec,
+      },
+    ];
+  }
+  return [];
+}
+
+/**
  * Determine the verdict in assumed-reading mode (unknown tokens without a
  * dictionary reading). Gemini judges against the conventional reading it
  * assumed itself, so mismatch requires audible evidence.
@@ -297,26 +325,23 @@ function determineAssumedVerdict(
     return { status: "pass", audioReview: [] };
   }
 
-  if (
-    gemini.verdict === "mismatch" &&
-    gemini.heardReading &&
-    gemini.startSec !== null
-  ) {
+  const findings = collectFindings(gemini);
+  const evidenced = findings.filter((f) => f.startSec !== null);
+
+  if (gemini.verdict === "mismatch" && evidenced.length > 0) {
     return {
       status: "review",
-      audioReview: [
-        {
-          code: "AUDIO_PRONUNCIATION_SUSPECT",
-          status: "review",
-          sourceStage: "audio",
-          expected: null,
-          observed: gemini.heardReading,
-          startSec: gemini.startSec,
-          endSec: gemini.endSec,
-          reason: `AI推定読みでの判定: ${gemini.reason || "発音の不一致が検出されました"}`,
-          tokens: unknownTokens,
-        },
-      ],
+      audioReview: evidenced.map((finding) => ({
+        code: "AUDIO_PRONUNCIATION_SUSPECT" as const,
+        status: "review" as const,
+        sourceStage: "audio" as const,
+        expected: null,
+        observed: finding.heardReading,
+        startSec: finding.startSec,
+        endSec: finding.endSec,
+        reason: `AI推定読みでの判定: ${finding.reason || "発音の不一致が検出されました"}`,
+        tokens: unknownTokens,
+      })),
     };
   }
 
@@ -341,19 +366,19 @@ function determineAssumedVerdict(
 
 /**
  * Determine the final verdict based on STT differences and Gemini verdict.
+ * Every evidenced Gemini finding becomes its own issue, so a unit with
+ * several misread spots lists all of them instead of just one.
  */
 function determineVerdict(
   sttHasDifferences: boolean,
-  geminiVerdict: "match" | "mismatch" | "inconclusive",
-  heardReading: string | null,
-  startSec: number | null,
-  endSec: number | null,
-  reason: string,
+  gemini: GeminiReview,
   expectedReading: string,
   observedReading: string,
 ): { status: ReviewStatus; audioReview: ReviewIssue[] } {
+  const findings = collectFindings(gemini);
+
   // Gemini inconclusive -> inconclusive
-  if (geminiVerdict === "inconclusive") {
+  if (gemini.verdict === "inconclusive") {
     return {
       status: "inconclusive",
       audioReview: [
@@ -363,64 +388,58 @@ function determineVerdict(
           sourceStage: "audio",
           expected: expectedReading,
           observed: observedReading,
-          startSec,
-          endSec,
-          reason: reason || "AIの判断が不能です",
+          startSec: gemini.startSec,
+          endSec: gemini.endSec,
+          reason: gemini.reason || "AIの判断が不能です",
         },
       ],
     };
   }
 
   // STT match + Gemini match -> pass
-  if (!sttHasDifferences && geminiVerdict === "match") {
+  if (!sttHasDifferences && gemini.verdict === "match") {
     return { status: "pass", audioReview: [] };
   }
 
+  const toIssue = (finding: GeminiFinding): ReviewIssue => ({
+    code: "AUDIO_PRONUNCIATION_SUSPECT",
+    status: "review",
+    sourceStage: "audio",
+    expected: expectedReading,
+    observed: finding.heardReading,
+    startSec: finding.startSec,
+    endSec: finding.endSec,
+    reason: finding.reason || "発音の不一致が検出されました",
+  });
+
   // STT mismatch + Gemini mismatch -> review
-  if (sttHasDifferences && geminiVerdict === "mismatch") {
-    return {
-      status: "review",
-      audioReview: [
-        {
-          code: "AUDIO_PRONUNCIATION_SUSPECT",
-          status: "review",
-          sourceStage: "audio",
-          expected: expectedReading,
-          observed: heardReading || observedReading,
-          startSec,
-          endSec,
-          reason: reason || "発音の不一致が検出されました",
-        },
-      ],
-    };
+  if (sttHasDifferences && gemini.verdict === "mismatch") {
+    const issues =
+      findings.length > 0
+        ? findings.map(toIssue)
+        : [
+            {
+              code: "AUDIO_PRONUNCIATION_SUSPECT" as const,
+              status: "review" as const,
+              sourceStage: "audio" as const,
+              expected: expectedReading,
+              observed: observedReading,
+              startSec: gemini.startSec,
+              endSec: gemini.endSec,
+              reason: gemini.reason || "発音の不一致が検出されました",
+            },
+          ];
+    return { status: "review", audioReview: issues };
   }
 
   // STT match + Gemini mismatch with reading/time -> review
-  if (
-    !sttHasDifferences &&
-    geminiVerdict === "mismatch" &&
-    heardReading &&
-    startSec !== null
-  ) {
-    return {
-      status: "review",
-      audioReview: [
-        {
-          code: "AUDIO_PRONUNCIATION_SUSPECT",
-          status: "review",
-          sourceStage: "audio",
-          expected: expectedReading,
-          observed: heardReading,
-          startSec,
-          endSec,
-          reason: reason || "発音の不一致が検出されました",
-        },
-      ],
-    };
+  const evidenced = findings.filter((f) => f.startSec !== null);
+  if (!sttHasDifferences && gemini.verdict === "mismatch" && evidenced.length > 0) {
+    return { status: "review", audioReview: evidenced.map(toIssue) };
   }
 
   // STT mismatch + Gemini match -> inconclusive (conflict)
-  if (sttHasDifferences && geminiVerdict === "match") {
+  if (sttHasDifferences && gemini.verdict === "match") {
     return {
       status: "inconclusive",
       audioReview: [
@@ -430,8 +449,8 @@ function determineVerdict(
           sourceStage: "audio",
           expected: expectedReading,
           observed: observedReading,
-          startSec,
-          endSec,
+          startSec: gemini.startSec,
+          endSec: gemini.endSec,
           reason: "STTとGeminiの判断が一致しません",
         },
       ],
@@ -448,8 +467,8 @@ function determineVerdict(
         sourceStage: "audio",
         expected: expectedReading,
         observed: observedReading,
-        startSec,
-        endSec,
+        startSec: gemini.startSec,
+        endSec: gemini.endSec,
         reason: "Geminiの判断に根拠が不足しています",
       },
     ],

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { NormalizedContent } from "@/features/content/types";
 import { ImportPanel } from "@/components/import-panel";
+import { DemoPanel } from "@/components/demo-panel";
 import { ReviewWorkspace } from "@/components/review-workspace";
 
 export default function Page() {
@@ -31,6 +32,7 @@ export default function Page() {
             </p>
           </header>
           <ImportPanel onImport={handleImport} />
+          <DemoPanel onImport={handleImport} />
         </>
       )}
     </main>

@@ -158,6 +158,71 @@ describe("reviewUnit deterministic mode (defined reading)", () => {
     );
     expect(result.status).toBe("pass");
   });
+
+  it("lists every finding as its own issue when Gemini reports several", async () => {
+    const deps = createDeps(
+      {
+        verdict: "mismatch",
+        heardReading: "ひとだんらく",
+        reason: "複数の誤読があります",
+        startSec: 3.2,
+        endSec: 4.0,
+        findings: [
+          {
+            heardReading: "ひとだんらく",
+            reason: "一段落が「ひとだんらく」と発音されています",
+            startSec: 3.2,
+            endSec: 4.0,
+          },
+          {
+            heardReading: "かつぎます",
+            reason: "担いますが「かつぎます」と発音されています",
+            startSec: 7.5,
+            endSec: 8.3,
+          },
+        ],
+      },
+      { transcript: "あいてぃーぷろじぇくとではない" },
+    );
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("review");
+    expect(result.audioReview).toHaveLength(2);
+    expect(result.audioReview[0]).toMatchObject({
+      code: "AUDIO_PRONUNCIATION_SUSPECT",
+      observed: "ひとだんらく",
+      startSec: 3.2,
+    });
+    expect(result.audioReview[1]).toMatchObject({
+      code: "AUDIO_PRONUNCIATION_SUSPECT",
+      observed: "かつぎます",
+      startSec: 7.5,
+    });
+  });
+
+  it("falls back to the top-level fields when findings are absent", async () => {
+    const deps = createDeps(
+      {
+        verdict: "mismatch",
+        heardReading: "いっと",
+        reason: "ITがイットと発音されています",
+        startSec: 1.5,
+        endSec: 2.0,
+      },
+      { transcript: "いっとぷろじぇくと" },
+    );
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(result.status).toBe("review");
+    expect(result.audioReview).toHaveLength(1);
+    expect(result.audioReview[0]).toMatchObject({
+      code: "AUDIO_PRONUNCIATION_SUSPECT",
+      observed: "いっと",
+      startSec: 1.5,
+    });
+  });
 });
 
 describe("reviewUnit unclear-word detection (word-level confidence)", () => {

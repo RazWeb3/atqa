@@ -46,13 +46,35 @@ function getGenAI(): GoogleGenAI {
 
 const SYSTEM_INSTRUCTION = `Judge only whether the audio pronunciation matches expectedReading.
 Do not change expectedReading.
-Return mismatch only when you can provide heardReading and an audio time range.
+The STT transcript often silently corrects misread words back to their standard spelling, so never trust it as proof of correct pronunciation: listen to the audio itself and verify the reading of each content word against expectedReading.
+Report EVERY mismatched location in findings, not just the first one.
+Return mismatch only when you can provide heardReading and an audio time range for each finding.
 Return inconclusive when the evidence is insufficient.`;
 
 const ASSUMED_READING_SYSTEM_INSTRUCTION = `Some tokens have no dictionary reading.
 Assume the conventional Japanese reading used in the Japanese IT industry for those tokens, then judge whether the audio pronunciation matches that assumed reading.
-Return mismatch only when you can provide heardReading and an audio time range.
+The STT transcript often silently corrects misread words back to their standard spelling, so never trust it as proof of correct pronunciation: listen to the audio itself.
+Report EVERY mismatched location in findings, not just the first one.
+Return mismatch only when you can provide heardReading and an audio time range for each finding.
 Return inconclusive when the evidence is insufficient.`;
+
+// Shared JSON response format description embedded in both prompts.
+const RESPONSE_FORMAT = `以下のJSON形式で回答してください:
+{
+  "verdict": "match" | "mismatch" | "inconclusive",
+  "heardReading": string | null (最も顕著な不一致箇所の実際の読み),
+  "reason": string (300文字以内),
+  "startSec": number | null,
+  "endSec": number | null,
+  "findings": [
+    {
+      "heardReading": string (この箇所で実際に聞こえた読み),
+      "reason": string (300文字以内),
+      "startSec": number | null,
+      "endSec": number | null
+    }
+  ] (不一致箇所すべてを列挙。mismatch時は1件以上、match時は空配列)
+}`;
 
 /**
  * Review audio pronunciation using Gemini.
@@ -83,14 +105,8 @@ STT転写結果: ${input.sttTranscript}
 
 期待読みは確定していません。辞書未登録の語については、日本のIT分野で慣用的な日本語読みを想定してください。
 音声を聴いて、読み上げがその慣用読みとして適切か判定してください。
-以下のJSON形式で回答してください:
-{
-  "verdict": "match" | "mismatch" | "inconclusive",
-  "heardReading": string | null,
-  "reason": string (300文字以内),
-  "startSec": number | null,
-  "endSec": number | null
-}`
+不一致が複数箇所ある場合は、findingsにすべて列挙してください。
+${RESPONSE_FORMAT}`
     : `表示本文: ${input.displayText}
 期待読み: ${input.expectedReading}
 音声生成用テキスト: ${input.synthesisText || "(なし)"}
@@ -99,14 +115,9 @@ STT転写結果: ${input.sttTranscript}
 ${editsDescription || "(差分なし)"}
 
 音声を聴いて、期待読みと実際の発音が一致するか判定してください。
-以下のJSON形式で回答してください:
-{
-  "verdict": "match" | "mismatch" | "inconclusive",
-  "heardReading": string | null,
-  "reason": string (300文字以内),
-  "startSec": number | null,
-  "endSec": number | null
-}`;
+注意: STT転写は誤読を正しい表記に自動補正することがあります。転写や候補差分に頼らず、音声そのものを聴いて、漢字語の読みを一つずつ期待読みと照合してください。
+不一致が複数箇所ある場合は、findingsにすべて列挙してください。
+${RESPONSE_FORMAT}`;
 
   const responseSchema = {
     type: "OBJECT",
@@ -130,8 +141,28 @@ ${editsDescription || "(差分なし)"}
         type: "NUMBER",
         nullable: true,
       },
+      findings: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            heardReading: { type: "STRING" },
+            reason: { type: "STRING" },
+            startSec: { type: "NUMBER", nullable: true },
+            endSec: { type: "NUMBER", nullable: true },
+          },
+          required: ["heardReading", "reason", "startSec", "endSec"],
+        },
+      },
     },
-    required: ["verdict", "heardReading", "reason", "startSec", "endSec"],
+    required: [
+      "verdict",
+      "heardReading",
+      "reason",
+      "startSec",
+      "endSec",
+      "findings",
+    ],
   };
 
   // Try up to 2 times

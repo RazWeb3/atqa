@@ -188,21 +188,19 @@ function extractJapaneseSpans(
 }
 
 /**
- * Create a canonical reading from display text using dictionary corrections
- * and morphological analysis.
+ * Build a katakana-mixed reading of the text: dictionary corrections,
+ * kuromoji for Japanese spans, letterwise spelling for all-caps acronyms.
+ * Word-like Latin tokens the pipeline cannot read are left as-is.
  */
-export async function createCanonicalReading(
-  displayText: string,
-  extraCorrections?: Record<string, string>,
-): Promise<CanonicalReadingResult> {
-  const corrections = buildCorrections(extraCorrections);
-
+async function buildDictionaryReading(
+  text: string,
+  corrections: Correction[],
+): Promise<string> {
   // Step 1: Apply dictionary corrections
-  const { replacedRanges } =
-    applyDictionaryCorrections(displayText, corrections);
+  const { replacedRanges } = applyDictionaryCorrections(text, corrections);
 
   // Step 2: Extract Japanese spans that weren't replaced
-  const japaneseSpans = extractJapaneseSpans(displayText, replacedRanges);
+  const japaneseSpans = extractJapaneseSpans(text, replacedRanges);
 
   // Step 3: Convert Japanese spans to reading using kuromoji
   const spanReadings = new Map<number, string>();
@@ -214,7 +212,7 @@ export async function createCanonicalReading(
   // Step 4: Build the final reading
   let displayReading = "";
   let position = 0;
-  const normalized = normalizeUnicode(displayText);
+  const normalized = normalizeUnicode(text);
 
   while (position < normalized.length) {
     // Check if this position starts a dictionary correction
@@ -249,12 +247,25 @@ export async function createCanonicalReading(
     position++;
   }
 
-  // Step 5: Spell out all-caps acronyms that the dictionary did not cover,
-  // then check for remaining (word-like) Latin tokens
-  displayReading = displayReading.replace(LATIN_TOKEN_PATTERN, (token) =>
+  // Step 5: Spell out all-caps acronyms that the dictionary did not cover
+  return displayReading.replace(LATIN_TOKEN_PATTERN, (token) =>
     ACRONYM_PATTERN.test(token) ? spellOutAcronym(token) : token,
   );
+}
 
+/**
+ * Create a canonical reading from display text using dictionary corrections
+ * and morphological analysis.
+ */
+export async function createCanonicalReading(
+  displayText: string,
+  extraCorrections?: Record<string, string>,
+): Promise<CanonicalReadingResult> {
+  const corrections = buildCorrections(extraCorrections);
+
+  const displayReading = await buildDictionaryReading(displayText, corrections);
+
+  // Check for remaining (word-like) Latin tokens
   const latinMatches = displayReading.match(LATIN_TOKEN_PATTERN);
   if (latinMatches && latinMatches.length > 0) {
     return {
@@ -263,10 +274,10 @@ export async function createCanonicalReading(
     };
   }
 
-  // Step 6: Convert to hiragana for display
+  // Convert to hiragana for display
   const displayHiragana = katakanaToHiragana(displayReading);
 
-  // Step 7: Create comparison form (remove punctuation)
+  // Create comparison form (remove punctuation)
   const comparison = normalizeComparisonKana(displayHiragana);
 
   return {
@@ -274,4 +285,20 @@ export async function createCanonicalReading(
     display: displayHiragana,
     comparison,
   };
+}
+
+/**
+ * Best-effort comparison reading for STT transcripts. Unlike
+ * createCanonicalReading it never fails on unknown Latin tokens: the same
+ * dictionary + kuromoji + letterwise-acronym pipeline is applied so that
+ * transcripts like "AI検査" align with the letterwise expected reading
+ * instead of producing spurious diffs.
+ */
+export async function convertTextToComparisonReading(
+  text: string,
+  extraCorrections?: Record<string, string>,
+): Promise<string> {
+  const corrections = buildCorrections(extraCorrections);
+  const reading = await buildDictionaryReading(text, corrections);
+  return normalizeComparisonKana(katakanaToHiragana(reading));
 }
