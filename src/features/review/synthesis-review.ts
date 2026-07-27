@@ -3,23 +3,11 @@ import {
   alignReadings,
   hasDifferences,
 } from "@/features/pronunciation/align-readings";
-import { createCanonicalReading } from "@/features/pronunciation/canonical-reading";
-import { normalizeComparisonKana } from "@/features/pronunciation/kana";
-import { convertToReading } from "@/features/pronunciation/reading-converter.server";
+import {
+  convertSynthesisTextToComparisonReading,
+  createCanonicalReading,
+} from "@/features/pronunciation/canonical-reading";
 import type { ReviewIssue, StageReview } from "./review-contract";
-
-/**
- * Convert synthesis text to comparison kana.
- * Synthesis text may contain kanji, so we need to convert it to reading.
- */
-async function synthesizeTextToComparisonKana(
-  synthesisText: string,
-): Promise<string> {
-  // First convert any kanji to reading
-  const reading = await convertToReading(synthesisText);
-  // Then normalize to comparison form
-  return normalizeComparisonKana(reading);
-}
 
 /**
  * Stage 1: Review synthesis text against expected reading.
@@ -56,9 +44,12 @@ export async function reviewSynthesisText(
     return { status: "inconclusive", issues: [issue] };
   }
 
-  // Normalize synthesis text for comparison (convert kanji to reading)
-  const synthesisComparison = await synthesizeTextToComparisonKana(
+  // Normalize synthesis text for comparison. The same dictionary +
+  // kuromoji pipeline as the expected reading is used so both sides
+  // resolve kanji identically (e.g. 誤検知 -> ごけんち on both).
+  const synthesisComparison = await convertSynthesisTextToComparisonReading(
     unit.synthesisText,
+    extraCorrections,
   );
   const expectedComparison = canonical.comparison;
 

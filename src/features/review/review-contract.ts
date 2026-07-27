@@ -70,8 +70,11 @@ export type GeminiFinding = z.infer<typeof GeminiFindingSchema>;
 
 // Zod schema for Gemini review output. The top-level heardReading/time
 // fields keep the most prominent finding; `findings` lists every location.
-// Optional so responses without the field still validate.
+// `kanaTranscript` is the model's own as-heard transcription, produced
+// before judging so the verdict is grounded in listening. Optional so
+// older-style responses still validate.
 export const GeminiReviewSchema = z.object({
+  kanaTranscript: z.string().nullable().optional(),
   verdict: z.enum(["match", "mismatch", "inconclusive"]),
   heardReading: z.string().nullable(),
   reason: z.string().max(300),

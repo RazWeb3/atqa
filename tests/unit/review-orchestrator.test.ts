@@ -26,6 +26,7 @@ type DepsOptions = {
   transcript?: string;
   words?: SpeechWord[];
   whitelist?: WhitelistEntry[];
+  blindTranscript?: string;
 };
 
 function createDeps(gemini: GeminiReview, options: DepsOptions = {}) {
@@ -34,6 +35,7 @@ function createDeps(gemini: GeminiReview, options: DepsOptions = {}) {
     transcript = "アイティープロジェクト",
     words = [],
     whitelist = [],
+    blindTranscript = transcript,
   } = options;
   const fetchAudio = vi.fn(async (): Promise<AudioFetchResult> => ({
     body: new ArrayBuffer(8),
@@ -48,8 +50,15 @@ function createDeps(gemini: GeminiReview, options: DepsOptions = {}) {
     words,
   }));
   const reviewAudioWithGemini = vi.fn(async () => gemini);
+  const transcribeAudioKana = vi.fn(async () => blindTranscript);
   const loadWhitelist = vi.fn(async () => whitelist);
-  return { fetchAudio, recognizeSpeech, reviewAudioWithGemini, loadWhitelist };
+  return {
+    fetchAudio,
+    recognizeSpeech,
+    reviewAudioWithGemini,
+    transcribeAudioKana,
+    loadWhitelist,
+  };
 }
 
 describe("reviewUnit assumed-reading mode (unknown tokens)", () => {
@@ -74,7 +83,6 @@ describe("reviewUnit assumed-reading mode (unknown tokens)", () => {
     expect(deps.reviewAudioWithGemini).toHaveBeenCalledWith(
       expect.objectContaining({
         unknownTokens: ["Unknown"],
-        candidateEdits: [],
       }),
     );
     expect(result.status).toBe("pass");
@@ -182,7 +190,7 @@ describe("reviewUnit deterministic mode (defined reading)", () => {
           },
         ],
       },
-      { transcript: "あいてぃーぷろじぇくとではない" },
+      { transcript: "あいてぃーぷろじぇくとではない", blindTranscript: "あいてぃーぷろじぇくと" },
     );
 
     const result = await reviewUnit(createUnit(), deps);
@@ -210,7 +218,7 @@ describe("reviewUnit deterministic mode (defined reading)", () => {
         startSec: 1.5,
         endSec: 2.0,
       },
-      { transcript: "いっとぷろじぇくと" },
+      { transcript: "いっとぷろじぇくと", blindTranscript: "あいてぃーぷろじぇくと" },
     );
 
     const result = await reviewUnit(createUnit(), deps);
@@ -222,6 +230,90 @@ describe("reviewUnit deterministic mode (defined reading)", () => {
       observed: "いっと",
       startSec: 1.5,
     });
+  });
+
+  it("back-fills misread spots the anchored review missed from the blind transcript", async () => {
+    // Gemini flagged one spot but its anchored review missed a second
+    // deviation that the blind transcription still hears.
+    const deps = createDeps(
+      {
+        verdict: "mismatch",
+        heardReading: "いっと",
+        reason: "ITがイットと発音されています",
+        startSec: 1.5,
+        endSec: 2.0,
+      },
+      {
+        transcript: "いっとぷろじぇくと",
+        blindTranscript: "いっとぷろじぇくとです",
+      },
+    );
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(deps.transcribeAudioKana).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe("review");
+    expect(result.audioReview[0]).toMatchObject({
+      code: "AUDIO_PRONUNCIATION_SUSPECT",
+      observed: "いっと",
+    });
+    const backfilled = result.audioReview.slice(1);
+    expect(backfilled.length).toBeGreaterThan(0);
+    expect(
+      backfilled.every((issue) => issue.reason.includes("聴き取り転写")),
+    ).toBe(true);
+  });
+
+  it("upgrades a conflict to review via the blind second-opinion transcript", async () => {
+    // Gemini anchored on the expected reading and answered match while STT
+    // heard a difference; the blind transcription confirms the misread.
+    const deps = createDeps(
+      {
+        verdict: "match",
+        heardReading: null,
+        reason: "一致しています",
+        kanaTranscript: "あいてぃーぷろじぇくと",
+        startSec: null,
+        endSec: null,
+      },
+      {
+        transcript: "いっとぷろじぇくと",
+        blindTranscript: "いっとぷろじぇくと",
+      },
+    );
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(deps.transcribeAudioKana).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe("review");
+    expect(result.audioReview[0]).toMatchObject({
+      code: "AUDIO_PRONUNCIATION_SUSPECT",
+      status: "review",
+    });
+    expect(result.audioReview[0].reason).toContain("聴き取り転写");
+  });
+
+  it("keeps the conflict when the blind transcript matches the expected reading", async () => {
+    const deps = createDeps(
+      {
+        verdict: "match",
+        heardReading: null,
+        reason: "一致しています",
+        kanaTranscript: "あいてぃーぷろじぇくと",
+        startSec: null,
+        endSec: null,
+      },
+      {
+        transcript: "いっとぷろじぇくと",
+        blindTranscript: "あいてぃーぷろじぇくと",
+      },
+    );
+
+    const result = await reviewUnit(createUnit(), deps);
+
+    expect(deps.transcribeAudioKana).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe("inconclusive");
+    expect(result.audioReview[0].code).toBe("ASR_GEMINI_CONFLICT");
   });
 });
 

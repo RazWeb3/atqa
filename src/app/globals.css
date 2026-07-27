@@ -804,6 +804,38 @@ button {
   margin-top: 0;
 }
 
+/* Remaining findings listed under the primary one */
+.secondary-issues {
+  margin-bottom: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--line);
+}
+
+.secondary-issues-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.secondary-issue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.secondary-issue {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--line);
+}
+
+.secondary-issue .btn-seek {
+  margin-top: 0;
+}
+
 /* Collapsed technical evidence */
 .review-details {
   margin-top: 1rem;

@@ -159,6 +159,36 @@ function WhitelistActions({
   return null;
 }
 
+// Always-visible issue summary block, shared by the primary issue and
+// the remaining findings so every detected location is actionable
+// without expanding the technical evidence.
+function IssueSummary({
+  issue,
+  onSeekAndPlay,
+  whitelistedTokens,
+  onWhitelistAdd,
+}: {
+  issue: ReviewIssue;
+  onSeekAndPlay: (seconds: number) => void;
+  whitelistedTokens: string[];
+  onWhitelistAdd: (token: string, reading: string) => void;
+}) {
+  return (
+    <>
+      <p className="primary-issue-label">
+        {ISSUE_CODE_LABELS[issue.code] || issue.code}
+      </p>
+      <p className="primary-issue-reason">{issue.reason}</p>
+      <SeekButton issue={issue} onSeekAndPlay={onSeekAndPlay} />
+      <WhitelistActions
+        issue={issue}
+        whitelistedTokens={whitelistedTokens}
+        onWhitelistAdd={onWhitelistAdd}
+      />
+    </>
+  );
+}
+
 function IssueItem({
   issue,
   onSeekAndPlay,
@@ -224,6 +254,18 @@ export function ReviewPanel({
   // an undefined-reading note from Stage 1) would only add noise there.
   const primaryIssue =
     review && review.status !== "pass" ? selectPrimaryIssue(review) : null;
+  // Every other finding is listed right below the primary one: a unit
+  // with several misread spots must show all of them, not just the first.
+  const secondaryIssues =
+    review && primaryIssue
+      ? [...review.audioReview, ...review.synthesisReview]
+          .filter((issue) => issue !== primaryIssue)
+          .sort(
+            (a, b) =>
+              (a.startSec ?? Number.MAX_VALUE) -
+              (b.startSec ?? Number.MAX_VALUE),
+          )
+      : [];
   const busy = isReviewing || isQueued;
   // The jump buttons always move to another unit, so they are useless when
   // the current unit is the only actionable one.
@@ -304,16 +346,33 @@ export function ReviewPanel({
           {/* Primary issue: always-visible conclusion */}
           {primaryIssue && (
             <div className="primary-issue" data-testid="primary-issue">
-              <p className="primary-issue-label">
-                {ISSUE_CODE_LABELS[primaryIssue.code] || primaryIssue.code}
-              </p>
-              <p className="primary-issue-reason">{primaryIssue.reason}</p>
-              <SeekButton issue={primaryIssue} onSeekAndPlay={onSeekAndPlay} />
-              <WhitelistActions
+              <IssueSummary
                 issue={primaryIssue}
+                onSeekAndPlay={onSeekAndPlay}
                 whitelistedTokens={whitelistedTokens}
                 onWhitelistAdd={onWhitelistAdd}
               />
+            </div>
+          )}
+
+          {/* Remaining findings, each as actionable as the primary one */}
+          {secondaryIssues.length > 0 && (
+            <div className="secondary-issues" data-testid="secondary-issues">
+              <p className="secondary-issues-label">
+                他の指摘 {secondaryIssues.length}件
+              </p>
+              <ul className="secondary-issue-list">
+                {secondaryIssues.map((issue, i) => (
+                  <li key={`sec-${i}`} className="secondary-issue">
+                    <IssueSummary
+                      issue={issue}
+                      onSeekAndPlay={onSeekAndPlay}
+                      whitelistedTokens={whitelistedTokens}
+                      onWhitelistAdd={onWhitelistAdd}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

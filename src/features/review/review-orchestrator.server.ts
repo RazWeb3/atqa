@@ -7,7 +7,10 @@ import {
   convertTextToComparisonReading,
   createCanonicalReading,
 } from "@/features/pronunciation/canonical-reading";
-import { normalizeComparisonKana } from "@/features/pronunciation/kana";
+import {
+  normalizeComparisonKana,
+  normalizeSoundKana,
+} from "@/features/pronunciation/kana";
 import { reviewSynthesisText } from "./synthesis-review";
 import { fetchAudio } from "@/features/audio/audio-fetcher.server";
 import { getAllowedHosts, validateAudioUrl } from "@/features/audio/audio-policy";
@@ -16,6 +19,7 @@ import { loadWhitelist } from "./reading-whitelist.server";
 import type { WhitelistEntry } from "./reading-whitelist";
 import {
   reviewAudioWithGemini,
+  transcribeAudioKana,
   ModelOutputInvalidError,
 } from "./gemini-reviewer.server";
 import type {
@@ -44,6 +48,7 @@ export type ReviewDependencies = {
   fetchAudio: typeof fetchAudio;
   recognizeSpeech: typeof recognizeSpeech;
   reviewAudioWithGemini: typeof reviewAudioWithGemini;
+  transcribeAudioKana: typeof transcribeAudioKana;
   loadWhitelist: typeof loadWhitelist;
 };
 
@@ -57,6 +62,7 @@ export async function reviewUnit(
   const audioFetcher = deps?.fetchAudio || fetchAudio;
   const speechRecognizer = deps?.recognizeSpeech || recognizeSpeech;
   const geminiReviewer = deps?.reviewAudioWithGemini || reviewAudioWithGemini;
+  const kanaTranscriber = deps?.transcribeAudioKana || transcribeAudioKana;
   const whitelistLoader = deps?.loadWhitelist || loadWhitelist;
 
   // Human-approved readings overlay the pronunciation dictionary, so a
@@ -139,7 +145,12 @@ export async function reviewUnit(
   // Locate hard-to-hear spots from per-word STT confidence. These are
   // reported even when the overall verdict passes, so weak audio never
   // slips through unflagged.
-  const unclearIssues = detectUnclearWords(sttResult.words, whitelist);
+  const unclearIssues = await detectUnclearWords(
+    sttResult.words,
+    whitelist,
+    expectedComparison,
+    extraCorrections,
+  );
 
   // Check STT confidence
   if (
@@ -179,13 +190,21 @@ export async function reviewUnit(
     sttResult.transcript,
     extraCorrections,
   );
-  const edits =
-    expectedComparison !== null
-      ? alignReadings(expectedComparison, sttComparison)
-      : [];
-  const sttHasDifferences = hasDifferences(edits);
+  // Long-vowel spelling variants (えい/えー) and particle spellings
+  // (は/わ) are not pronunciation differences, so the diff decision runs
+  // on sound-normalized forms.
+  const sttHasDifferences =
+    expectedComparison !== null &&
+    hasDifferences(
+      alignReadings(
+        normalizeSoundKana(expectedComparison),
+        normalizeSoundKana(sttComparison),
+      ),
+    );
 
-  // Run Gemini review
+  // Run Gemini review. The reviewer transcribes the audio itself before
+  // judging; STT output stays out of the prompt so its silent corrections
+  // cannot bias the verdict.
   let geminiResult;
   try {
     geminiResult = await geminiReviewer({
@@ -193,9 +212,6 @@ export async function reviewUnit(
       mimeType: "audio/mpeg",
       displayText: unit.displayText,
       expectedReading: expectedComparison ?? "",
-      synthesisText: unit.synthesisText,
-      sttTranscript: sttResult.transcript,
-      candidateEdits: edits,
       unknownTokens,
     });
   } catch (error) {
@@ -225,9 +241,19 @@ export async function reviewUnit(
     };
   }
 
+  // Gemini's own as-heard transcript is a second, STT-independent ear.
+  // Its comparison form both corroborates STT diffs Gemini's verdict
+  // missed and surfaces misreads STT silently auto-corrected.
+  const kanaComparison = geminiResult.kanaTranscript
+    ? await convertTextToComparisonReading(
+        geminiResult.kanaTranscript,
+        extraCorrections,
+      )
+    : null;
+
   // Determine final verdict. In assumed-reading mode Gemini is the sole
   // judge because the STT diff has no baseline to vote with.
-  const verdict =
+  let verdict =
     unknownTokens !== null
       ? determineAssumedVerdict(geminiResult, unknownTokens)
       : determineVerdict(
@@ -235,7 +261,74 @@ export async function reviewUnit(
           geminiResult,
           expectedComparison ?? "",
           sttComparison,
+          kanaComparison,
         );
+
+  // The review prompt shows Gemini the expected reading, and on some runs
+  // the model anchors on it and normalizes real misreads back to "match"
+  // (or omits them from findings). A blind kana transcription (no expected
+  // reading shown) is free of that anchor, so it gets the last word twice:
+  // it settles STT-vs-Gemini conflicts, and it back-fills misread spots
+  // the anchored review missed on flagged units. It only ever adds
+  // findings, never downgrades to a silent pass.
+  const conflictNeedsBlindCheck =
+    sttHasDifferences &&
+    geminiResult.verdict === "match" &&
+    verdict.status === "inconclusive";
+  if (
+    unknownTokens === null &&
+    expectedComparison !== null &&
+    (verdict.status === "review" || conflictNeedsBlindCheck)
+  ) {
+    try {
+      const blindTranscript = await kanaTranscriber({
+        audio: audioBuffer,
+        mimeType: "audio/mpeg",
+      });
+      const blindComparison = await convertTextToComparisonReading(
+        blindTranscript,
+        extraCorrections,
+      );
+      // Sanity gate: a transcript wildly longer or shorter than the
+      // expected reading is a runaway response (meta commentary, dropped
+      // audio), not a hearing; its diff would be garbage findings.
+      const lengthRatio =
+        expectedComparison.length > 0
+          ? blindComparison.length / expectedComparison.length
+          : 0;
+      if (lengthRatio < 0.6 || lengthRatio > 1.4) {
+        throw new Error("blind transcript length out of range");
+      }
+      // Spots already reported stay reported; the blind diff only
+      // contributes locations no pronunciation finding covered yet. The
+      // conflict issue's observed field is the whole transcript, so it
+      // must not act as coverage.
+      const coveredReadings = verdict.audioReview
+        .filter((issue) => issue.code === "AUDIO_PRONUNCIATION_SUSPECT")
+        .map((issue) => issue.observed)
+        .filter((observed): observed is string => !!observed)
+        .map((observed) =>
+          normalizeSoundKana(normalizeComparisonKana(observed)),
+        );
+      const blindIssues = kanaDiffIssues(
+        normalizeSoundKana(expectedComparison),
+        normalizeSoundKana(blindComparison),
+        coveredReadings,
+      );
+      if (blindIssues.length > 0) {
+        // A confirmed misread supersedes the conflict placeholder but
+        // rides along with existing review findings.
+        const kept =
+          verdict.status === "review" ? verdict.audioReview : [];
+        verdict = {
+          status: "review",
+          audioReview: [...kept, ...blindIssues],
+        };
+      }
+    } catch {
+      // The first opinion (review or conflict -> human check) stands.
+    }
+  }
 
   // Unclear-word findings ride along with the verdict; a passing unit with
   // hard-to-hear spots still needs a human ear.
@@ -258,27 +351,47 @@ export async function reviewUnit(
 /**
  * Flag words the STT engine itself struggled with as hard-to-hear spots.
  * Whitelisted tokens/readings are skipped: a human already confirmed them.
+ * Alphanumeric or kanji words whose reading already occurs in the expected
+ * reading are also skipped: the engine merely re-spelled a sound it heard
+ * fine ("9" for spelled-out きゅー, homophone 精製 for せいせい), which is
+ * not an audio problem. Kana words stay flagged: their text IS the sound,
+ * so low confidence there means the audio itself is unclear.
  */
-function detectUnclearWords(
+async function detectUnclearWords(
   words: SpeechWord[],
   whitelist: WhitelistEntry[],
-): ReviewIssue[] {
+  expectedComparison: string | null,
+  extraCorrections: Record<string, string>,
+): Promise<ReviewIssue[]> {
   const approved = new Set<string>();
   for (const entry of whitelist) {
     approved.add(normalizeComparisonKana(entry.token));
     approved.add(normalizeComparisonKana(entry.reading));
   }
 
-  return words
-    .filter(
-      (word) =>
-        word.confidence !== null &&
-        word.confidence < ASR_WORD_CONFIDENCE_THRESHOLD &&
-        word.text.length > 0 &&
-        !approved.has(normalizeComparisonKana(word.text)),
-    )
-    .slice(0, MAX_UNCLEAR_WORD_ISSUES)
-    .map((word) => ({
+  const candidates = words.filter(
+    (word) =>
+      word.confidence !== null &&
+      word.confidence < ASR_WORD_CONFIDENCE_THRESHOLD &&
+      word.text.length > 0 &&
+      !approved.has(normalizeComparisonKana(word.text)),
+  );
+
+  const issues: ReviewIssue[] = [];
+  for (const word of candidates) {
+    if (issues.length >= MAX_UNCLEAR_WORD_ISSUES) break;
+
+    if (expectedComparison !== null && /[0-9A-Za-z\u4e00-\u9faf]/.test(word.text)) {
+      const wordReading = await convertTextToComparisonReading(
+        word.text,
+        extraCorrections,
+      );
+      if (wordReading.length > 0 && expectedComparison.includes(wordReading)) {
+        continue;
+      }
+    }
+
+    issues.push({
       code: "AUDIO_UNCLEAR_SUSPECT" as const,
       status: "review" as const,
       sourceStage: "audio" as const,
@@ -287,7 +400,10 @@ function detectUnclearWords(
       startSec: word.startSec,
       endSec: word.endSec,
       reason: `音声認識の信頼度が低い語です (${word.confidence!.toFixed(2)})`,
-    }));
+    });
+  }
+
+  return issues;
 }
 
 /**
@@ -365,6 +481,39 @@ function determineAssumedVerdict(
 }
 
 /**
+ * Build issues from segments where the model's own as-heard transcript
+ * deviates from the expected reading. Segments already covered by an
+ * explicit Gemini finding are skipped, as are one-character segments
+ * (typical transcription jitter). Both sides are sound-normalized.
+ */
+function kanaDiffIssues(
+  normalizedExpected: string,
+  normalizedKana: string,
+  coveredReadings: string[],
+): ReviewIssue[] {
+  const segments = alignReadings(normalizedExpected, normalizedKana).filter(
+    (edit) =>
+      edit.operation !== "equal" &&
+      Math.max(edit.expected.length, edit.observed.length) >= 2 &&
+      !(
+        edit.observed.length > 0 &&
+        coveredReadings.some((heard) => heard.includes(edit.observed))
+      ),
+  );
+
+  return segments.slice(0, 3).map((edit) => ({
+    code: "AUDIO_PRONUNCIATION_SUSPECT" as const,
+    status: "review" as const,
+    sourceStage: "audio" as const,
+    expected: edit.expected || null,
+    observed: edit.observed || null,
+    startSec: null,
+    endSec: null,
+    reason: `AIの聴き取り転写が期待読みと異なります（期待:「${edit.expected || "(なし)"}」、聴取:「${edit.observed || "(なし)"}」）`,
+  }));
+}
+
+/**
  * Determine the final verdict based on STT differences and Gemini verdict.
  * Every evidenced Gemini finding becomes its own issue, so a unit with
  * several misread spots lists all of them instead of just one.
@@ -374,11 +523,35 @@ function determineVerdict(
   gemini: GeminiReview,
   expectedReading: string,
   observedReading: string,
+  kanaComparison: string | null,
 ): { status: ReviewStatus; audioReview: ReviewIssue[] } {
-  const findings = collectFindings(gemini);
+  const normalizedExpected = normalizeSoundKana(expectedReading);
+  const normalizedKana =
+    kanaComparison !== null && kanaComparison.length > 0
+      ? normalizeSoundKana(kanaComparison)
+      : null;
+
+  // Drop findings whose heard reading already occurs in the expected
+  // reading once spelling is sound-normalized (えい/えー, は/わ): those
+  // are notation quibbles, not misreads.
+  const findings = collectFindings(gemini).filter((finding) => {
+    const heard = normalizeSoundKana(
+      normalizeComparisonKana(finding.heardReading),
+    );
+    return !(heard.length > 0 && normalizedExpected.includes(heard));
+  });
+  const coveredReadings = findings.map((finding) =>
+    normalizeSoundKana(normalizeComparisonKana(finding.heardReading)),
+  );
+
+  // A mismatch whose every finding was notation noise is a match.
+  const geminiVerdict =
+    gemini.verdict === "mismatch" && findings.length === 0
+      ? "match"
+      : gemini.verdict;
 
   // Gemini inconclusive -> inconclusive
-  if (gemini.verdict === "inconclusive") {
+  if (geminiVerdict === "inconclusive") {
     return {
       status: "inconclusive",
       audioReview: [
@@ -396,11 +569,6 @@ function determineVerdict(
     };
   }
 
-  // STT match + Gemini match -> pass
-  if (!sttHasDifferences && gemini.verdict === "match") {
-    return { status: "pass", audioReview: [] };
-  }
-
   const toIssue = (finding: GeminiFinding): ReviewIssue => ({
     code: "AUDIO_PRONUNCIATION_SUSPECT",
     status: "review",
@@ -412,34 +580,49 @@ function determineVerdict(
     reason: finding.reason || "発音の不一致が検出されました",
   });
 
-  // STT mismatch + Gemini mismatch -> review
-  if (sttHasDifferences && gemini.verdict === "mismatch") {
-    const issues =
-      findings.length > 0
-        ? findings.map(toIssue)
-        : [
-            {
-              code: "AUDIO_PRONUNCIATION_SUSPECT" as const,
-              status: "review" as const,
-              sourceStage: "audio" as const,
-              expected: expectedReading,
-              observed: observedReading,
-              startSec: gemini.startSec,
-              endSec: gemini.endSec,
-              reason: gemini.reason || "発音の不一致が検出されました",
-            },
-          ];
-    return { status: "review", audioReview: issues };
-  }
-
-  // STT match + Gemini mismatch with reading/time -> review
-  const evidenced = findings.filter((f) => f.startSec !== null);
-  if (!sttHasDifferences && gemini.verdict === "mismatch" && evidenced.length > 0) {
-    return { status: "review", audioReview: evidenced.map(toIssue) };
-  }
-
-  // STT mismatch + Gemini match -> inconclusive (conflict)
-  if (sttHasDifferences && gemini.verdict === "match") {
+  if (geminiVerdict === "mismatch") {
+    // STT mismatch + Gemini mismatch -> review. When STT saw no
+    // difference, a finding needs audible evidence (a time range) AND
+    // corroboration from the model's own transcript diff; heard readings
+    // that only add jitter-sized noise (one inserted particle sound) are
+    // dropped so a single hallucinated finding cannot flag a clean unit.
+    let usable = findings;
+    if (!sttHasDifferences) {
+      const segments =
+        normalizedKana !== null
+          ? kanaDiffIssues(normalizedExpected, normalizedKana, [])
+          : null;
+      usable = findings.filter((finding, index) => {
+        if (finding.startSec === null) return false;
+        if (segments === null) return true;
+        const heard = coveredReadings[index];
+        return segments.some(
+          (segment) =>
+            segment.observed !== null && heard.includes(segment.observed),
+        );
+      });
+    }
+    if (usable.length > 0) {
+      const issues = usable.map(toIssue);
+      // The transcript diff may expose misreads Gemini did not list
+      // (e.g. it reported one spot but heard two).
+      if (normalizedKana !== null) {
+        issues.push(
+          ...kanaDiffIssues(normalizedExpected, normalizedKana, coveredReadings),
+        );
+      }
+      return { status: "review", audioReview: issues };
+    }
+    // Every finding was uncorroborated noise while STT heard no
+    // difference either -> the two ears agree the audio is fine.
+    if (
+      !sttHasDifferences &&
+      normalizedKana !== null &&
+      kanaDiffIssues(normalizedExpected, normalizedKana, []).length === 0
+    ) {
+      return { status: "pass", audioReview: [] };
+    }
+    // Mismatch without evidence -> inconclusive
     return {
       status: "inconclusive",
       audioReview: [
@@ -451,13 +634,28 @@ function determineVerdict(
           observed: observedReading,
           startSec: gemini.startSec,
           endSec: gemini.endSec,
-          reason: "STTとGeminiの判断が一致しません",
+          reason: "Geminiの判断に根拠が不足しています",
         },
       ],
     };
   }
 
-  // STT match + Gemini mismatch without reading/time -> inconclusive
+  // Gemini says match. When STT saw no difference either, the unit passes.
+  if (!sttHasDifferences) {
+    return { status: "pass", audioReview: [] };
+  }
+
+  // STT saw a difference. Before declaring a conflict, check Gemini's own
+  // as-heard transcript: when it also deviates from the expected reading,
+  // the two ears actually agree and the verdict field simply missed it.
+  if (normalizedKana !== null) {
+    const corroborated = kanaDiffIssues(normalizedExpected, normalizedKana, []);
+    if (corroborated.length > 0) {
+      return { status: "review", audioReview: corroborated };
+    }
+  }
+
+  // STT mismatch + Gemini match -> inconclusive (conflict)
   return {
     status: "inconclusive",
     audioReview: [
@@ -469,7 +667,7 @@ function determineVerdict(
         observed: observedReading,
         startSec: gemini.startSec,
         endSec: gemini.endSec,
-        reason: "Geminiの判断に根拠が不足しています",
+        reason: "STTとGeminiの判断が一致しません",
       },
     ],
   };

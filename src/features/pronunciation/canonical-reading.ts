@@ -294,7 +294,77 @@ export async function createCanonicalReading(
  * transcripts like "AI検査" align with the letterwise expected reading
  * instead of producing spurious diffs.
  */
+
+// Cloud STT writes spelled-out kana back as digits and Latin words
+// (「えーてぃーきゅーえー」 -> "at 9 A", 「ごけんち」 -> "5 検知"), which
+// would flag every spelled-out acronym as different. Standalone digits
+// are expanded to their spoken reading; 9 uses キュー so it lines up
+// with the letterwise reading of Q.
+const ASR_DIGIT_READINGS: Record<string, string> = {
+  "0": "ゼロ",
+  "1": "イチ",
+  "2": "ニ",
+  "3": "サン",
+  "4": "ヨン",
+  "5": "ゴ",
+  "6": "ロク",
+  "7": "ナナ",
+  "8": "ハチ",
+  "9": "キュー",
+};
+
+// Native-Japanese counter words the engine writes back as digits
+// (ふたつ -> "2つ"). Expanded before the single-digit rule, which would
+// otherwise produce につ.
+const ASR_COUNTER_READINGS: Record<string, string> = {
+  "1": "ヒト",
+  "2": "フタ",
+  "3": "ミッ",
+  "4": "ヨッ",
+  "5": "イツ",
+  "6": "ムッ",
+  "7": "ナナ",
+  "8": "ヤッ",
+  "9": "ココノ",
+};
+
+// Applied to the transcript side only, after dictionary replacement, so
+// dictionary keys containing digits (WPA3, IPv6...) are never affected.
+function expandAsrArtifacts(reading: string): string {
+  const withCounters = reading.replace(
+    /(?<![0-9])([0-9])(?=[つツ])/g,
+    (_, digit) => ASR_COUNTER_READINGS[digit],
+  );
+  const withDigits = withCounters.replace(
+    /(?<![0-9])[0-9](?![0-9])/g,
+    (digit) => ASR_DIGIT_READINGS[digit],
+  );
+  // Remaining Latin tokens in a transcript are almost always the STT
+  // engine re-spelling letter sounds ("at" for えーてぃー), so read them
+  // letter by letter. A genuine reading difference still surfaces because
+  // the expected reading would not contain those letter sounds.
+  return withDigits.replace(LATIN_TOKEN_PATTERN, (token) =>
+    spellOutAcronym(token.toUpperCase()),
+  );
+}
+
 export async function convertTextToComparisonReading(
+  text: string,
+  extraCorrections?: Record<string, string>,
+): Promise<string> {
+  const corrections = buildCorrections(extraCorrections);
+  const reading = await buildDictionaryReading(text, corrections);
+  const expanded = expandAsrArtifacts(reading);
+  return normalizeComparisonKana(katakanaToHiragana(expanded));
+}
+
+/**
+ * Comparison reading for TTS synthesis scripts. Uses the same dictionary +
+ * kuromoji + acronym pipeline as the expected reading so identical source
+ * text on both sides can never produce a spurious mismatch. No ASR
+ * artifact expansion: synthesis text is authored, not transcribed.
+ */
+export async function convertSynthesisTextToComparisonReading(
   text: string,
   extraCorrections?: Record<string, string>,
 ): Promise<string> {
