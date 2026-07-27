@@ -14,6 +14,7 @@ import {
   ModelOutputInvalidError,
 } from "./gemini-reviewer.server";
 import type {
+  GeminiReview,
   ReviewIssue,
   ReviewResponse,
   ReviewStatus,
@@ -43,31 +44,14 @@ export async function reviewUnit(
   // Stage 1: Synthesis text review
   const stage1 = await reviewSynthesisText(unit);
 
-  // Get canonical reading
+  // Get canonical reading. When unknown word-like tokens remain, fall back
+  // to assumed-reading mode: Gemini derives the conventional reading itself
+  // instead of the unit being written off as inconclusive.
   const canonical = await createCanonicalReading(unit.displayText);
-
-  // If canonical reading is undefined, return inconclusive
-  if (canonical.status === "undefined") {
-    return {
-      unitId: unit.id,
-      status: "inconclusive",
-      synthesisReview: stage1.issues,
-      audioReview: [
-        {
-          code: "UNDEFINED_READING",
-          status: "inconclusive",
-          sourceStage: "audio",
-          expected: null,
-          observed: null,
-          startSec: null,
-          endSec: null,
-          reason: `期待読みが未定義です: ${canonical.unknownTokens.join(", ")}`,
-        },
-      ],
-      asrTranscript: null,
-      asrConfidence: null,
-    };
-  }
+  const unknownTokens =
+    canonical.status === "undefined" ? canonical.unknownTokens : null;
+  const expectedComparison =
+    canonical.status === "defined" ? canonical.comparison : null;
 
   // Fetch audio
   let audioBuffer: Buffer;
@@ -138,7 +122,7 @@ export async function reviewUnit(
           code: "LOW_ASR_CONFIDENCE",
           status: "inconclusive",
           sourceStage: "audio",
-          expected: canonical.comparison,
+          expected: expectedComparison,
           observed: sttResult.transcript,
           startSec: null,
           endSec: null,
@@ -150,9 +134,13 @@ export async function reviewUnit(
     };
   }
 
-  // Normalize STT transcript and align with expected reading
+  // Normalize STT transcript and align with expected reading. In
+  // assumed-reading mode there is no expected reading to align against.
   const sttComparison = normalizeComparisonKana(sttResult.transcript);
-  const edits = alignReadings(canonical.comparison, sttComparison);
+  const edits =
+    expectedComparison !== null
+      ? alignReadings(expectedComparison, sttComparison)
+      : [];
   const sttHasDifferences = hasDifferences(edits);
 
   // Run Gemini review
@@ -162,10 +150,11 @@ export async function reviewUnit(
       audio: audioBuffer,
       mimeType: "audio/mpeg",
       displayText: unit.displayText,
-      expectedReading: canonical.comparison,
+      expectedReading: expectedComparison ?? "",
       synthesisText: unit.synthesisText,
       sttTranscript: sttResult.transcript,
       candidateEdits: edits,
+      unknownTokens,
     });
   } catch (error) {
     const code =
@@ -182,7 +171,7 @@ export async function reviewUnit(
           code,
           status: "inconclusive",
           sourceStage: "audio",
-          expected: canonical.comparison,
+          expected: expectedComparison,
           observed: null,
           startSec: null,
           endSec: null,
@@ -194,17 +183,21 @@ export async function reviewUnit(
     };
   }
 
-  // Determine final verdict based on STT diff and Gemini verdict
-  const { status, audioReview } = determineVerdict(
-    sttHasDifferences,
-    geminiResult.verdict,
-    geminiResult.heardReading,
-    geminiResult.startSec,
-    geminiResult.endSec,
-    geminiResult.reason,
-    canonical.comparison,
-    sttComparison,
-  );
+  // Determine final verdict. In assumed-reading mode Gemini is the sole
+  // judge because the STT diff has no baseline to vote with.
+  const { status, audioReview } =
+    unknownTokens !== null
+      ? determineAssumedVerdict(geminiResult, unknownTokens)
+      : determineVerdict(
+          sttHasDifferences,
+          geminiResult.verdict,
+          geminiResult.heardReading,
+          geminiResult.startSec,
+          geminiResult.endSec,
+          geminiResult.reason,
+          expectedComparison ?? "",
+          sttComparison,
+        );
 
   return {
     unitId: unit.id,
@@ -213,6 +206,59 @@ export async function reviewUnit(
     audioReview,
     asrTranscript: sttResult.transcript,
     asrConfidence: sttResult.confidence,
+  };
+}
+
+/**
+ * Determine the verdict in assumed-reading mode (unknown tokens without a
+ * dictionary reading). Gemini judges against the conventional reading it
+ * assumed itself, so mismatch requires audible evidence.
+ */
+function determineAssumedVerdict(
+  gemini: GeminiReview,
+  unknownTokens: string[],
+): { status: ReviewStatus; audioReview: ReviewIssue[] } {
+  if (gemini.verdict === "match") {
+    return { status: "pass", audioReview: [] };
+  }
+
+  if (
+    gemini.verdict === "mismatch" &&
+    gemini.heardReading &&
+    gemini.startSec !== null
+  ) {
+    return {
+      status: "review",
+      audioReview: [
+        {
+          code: "AUDIO_PRONUNCIATION_SUSPECT",
+          status: "review",
+          sourceStage: "audio",
+          expected: null,
+          observed: gemini.heardReading,
+          startSec: gemini.startSec,
+          endSec: gemini.endSec,
+          reason: `AI推定読みでの判定: ${gemini.reason || "発音の不一致が検出されました"}`,
+        },
+      ],
+    };
+  }
+
+  // Inconclusive verdict, or mismatch without evidence
+  return {
+    status: "inconclusive",
+    audioReview: [
+      {
+        code: "UNDEFINED_READING",
+        status: "inconclusive",
+        sourceStage: "audio",
+        expected: null,
+        observed: gemini.heardReading,
+        startSec: gemini.startSec,
+        endSec: gemini.endSec,
+        reason: `AI推定読みでも判定できませんでした（辞書未登録: ${unknownTokens.join(", ")}）${gemini.reason ? ` — ${gemini.reason}` : ""}`,
+      },
+    ],
   };
 }
 

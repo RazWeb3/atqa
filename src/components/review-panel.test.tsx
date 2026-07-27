@@ -178,7 +178,7 @@ describe("ReviewPanel", () => {
     expect(screen.getByText("Stage 2: 実音声QA")).toBeInTheDocument();
   });
 
-  it("calls onSeekAndPlay with startSec when the primary seek button is clicked", async () => {
+  it("calls onSeekAndPlay with a lead-in before startSec when the primary seek button is clicked", async () => {
     const user = userEvent.setup();
     const onSeekAndPlay = vi.fn();
     const review = createReviewResponse();
@@ -195,7 +195,40 @@ describe("ReviewPanel", () => {
       name: /問題位置から再生/,
     });
     await user.click(buttons[0]);
-    expect(onSeekAndPlay).toHaveBeenCalledWith(1.5);
+    // 0.5s lead-in compensates for approximate timestamps and MP3 seeking.
+    expect(onSeekAndPlay).toHaveBeenCalledWith(1.0);
+  });
+
+  it("never seeks to a negative position", async () => {
+    const user = userEvent.setup();
+    const onSeekAndPlay = vi.fn();
+    const review = createReviewResponse({
+      audioReview: [
+        {
+          code: "AUDIO_PRONUNCIATION_SUSPECT",
+          status: "review",
+          sourceStage: "audio",
+          expected: "あいてぃー",
+          observed: "いっと",
+          startSec: 0.2,
+          endSec: 0.6,
+          reason: "発音の不一致が検出されました",
+        },
+      ],
+    });
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        review={review}
+        onSeekAndPlay={onSeekAndPlay}
+      />,
+    );
+
+    const buttons = screen.getAllByRole("button", {
+      name: /問題位置から再生/,
+    });
+    await user.click(buttons[0]);
+    expect(onSeekAndPlay).toHaveBeenCalledWith(0);
   });
 
   it("does not show seek button when startSec is null", () => {
@@ -247,6 +280,28 @@ describe("ReviewPanel", () => {
 
     expect(screen.queryByTestId("confirm-issue-btn")).not.toBeInTheDocument();
     expect(screen.queryByTestId("dismiss-issue-btn")).not.toBeInTheDocument();
+  });
+
+  it("does not show a primary issue for pass status even with stage notes", () => {
+    const review = createReviewResponse({
+      status: "pass",
+      audioReview: [],
+      synthesisReview: [
+        {
+          code: "UNDEFINED_READING",
+          status: "inconclusive",
+          sourceStage: "synthesis_text",
+          expected: null,
+          observed: null,
+          startSec: null,
+          endSec: null,
+          reason: "期待読みが未定義です: Unknown",
+        },
+      ],
+    });
+    render(<ReviewPanel {...defaultProps} review={review} />);
+
+    expect(screen.queryByTestId("primary-issue")).not.toBeInTheDocument();
   });
 
   it("calls onResolve with confirmed_issue when confirm button clicked", async () => {

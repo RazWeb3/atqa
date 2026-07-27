@@ -20,6 +20,55 @@ const corrections: Correction[] = Object.entries(dictionary.corrections)
 // Pattern to detect remaining Latin tokens after dictionary replacement
 const LATIN_TOKEN_PATTERN = /[A-Za-z][A-Za-z0-9._-]*/g;
 
+// All-caps tokens (optionally with digits) are read out letter by letter,
+// which is the standard Japanese convention for IT acronyms (PDCA, WBS,
+// KPI...). Word-like tokens (Java, IoT) are excluded because letterwise
+// reading would be wrong for them.
+const ACRONYM_PATTERN = /^[A-Z][A-Z0-9]*$/;
+
+const LETTER_READINGS: Record<string, string> = {
+  A: "エー",
+  B: "ビー",
+  C: "シー",
+  D: "ディー",
+  E: "イー",
+  F: "エフ",
+  G: "ジー",
+  H: "エイチ",
+  I: "アイ",
+  J: "ジェー",
+  K: "ケー",
+  L: "エル",
+  M: "エム",
+  N: "エヌ",
+  O: "オー",
+  P: "ピー",
+  Q: "キュー",
+  R: "アール",
+  S: "エス",
+  T: "ティー",
+  U: "ユー",
+  V: "ブイ",
+  W: "ダブリュー",
+  X: "エックス",
+  Y: "ワイ",
+  Z: "ゼット",
+  "0": "ゼロ",
+  "1": "ワン",
+  "2": "ツー",
+  "3": "スリー",
+  "4": "フォー",
+  "5": "ファイブ",
+  "6": "シックス",
+  "7": "セブン",
+  "8": "エイト",
+  "9": "ナイン",
+};
+
+function spellOutAcronym(token: string): string {
+  return [...token].map((char) => LETTER_READINGS[char] ?? char).join("");
+}
+
 /**
  * Apply dictionary corrections to text using longest-match-first,
  * non-overlapping replacement.
@@ -175,7 +224,12 @@ export async function createCanonicalReading(
     position++;
   }
 
-  // Step 5: Check for remaining Latin tokens
+  // Step 5: Spell out all-caps acronyms that the dictionary did not cover,
+  // then check for remaining (word-like) Latin tokens
+  displayReading = displayReading.replace(LATIN_TOKEN_PATTERN, (token) =>
+    ACRONYM_PATTERN.test(token) ? spellOutAcronym(token) : token,
+  );
+
   const latinMatches = displayReading.match(LATIN_TOKEN_PATTERN);
   if (latinMatches && latinMatches.length > 0) {
     return {

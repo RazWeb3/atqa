@@ -26,11 +26,36 @@ describe("createCanonicalReading", () => {
     });
   });
 
-  it("returns undefined for unknown Latin tokens", async () => {
-    const result = await createCanonicalReading("UNKNOWN製品");
+  it("returns undefined for unknown word-like Latin tokens", async () => {
+    const result = await createCanonicalReading("Unknown製品");
     expect(result).toEqual({
       status: "undefined",
-      unknownTokens: ["UNKNOWN"],
+      unknownTokens: ["Unknown"],
+    });
+  });
+
+  it("spells out all-caps acronyms letter by letter without a dictionary", async () => {
+    const result = await createCanonicalReading("PDCAサイクル");
+    expect(result).toMatchObject({
+      status: "defined",
+      comparison: "ぴーでぃーしーえーさいくる",
+    });
+  });
+
+  it("spells out acronyms containing digits", async () => {
+    const result = await createCanonicalReading("B2B取引");
+    expect(result).toMatchObject({
+      status: "defined",
+      comparison: "びーつーびーとりひき",
+    });
+  });
+
+  it("prefers dictionary readings over letterwise spelling", async () => {
+    // PMBOK is in the dictionary as ピンボック, not letterwise
+    const result = await createCanonicalReading("PMBOK");
+    expect(result).toMatchObject({
+      status: "defined",
+      comparison: "ぴんぼっく",
     });
   });
 

@@ -10,6 +10,10 @@ export type AudioReviewInput = {
   synthesisText: string | null;
   sttTranscript: string;
   candidateEdits: ReadingEdit[];
+  // Tokens without a dictionary/deterministic reading. When present, the
+  // model assumes the conventional Japanese reading instead of matching
+  // against expectedReading (assumed-reading mode).
+  unknownTokens: string[] | null;
 };
 
 export class ModelOutputInvalidError extends Error {
@@ -45,6 +49,11 @@ Do not change expectedReading.
 Return mismatch only when you can provide heardReading and an audio time range.
 Return inconclusive when the evidence is insufficient.`;
 
+const ASSUMED_READING_SYSTEM_INSTRUCTION = `Some tokens have no dictionary reading.
+Assume the conventional Japanese reading used in the Japanese IT industry for those tokens, then judge whether the audio pronunciation matches that assumed reading.
+Return mismatch only when you can provide heardReading and an audio time range.
+Return inconclusive when the evidence is insufficient.`;
+
 /**
  * Review audio pronunciation using Gemini.
  */
@@ -62,14 +71,34 @@ export async function reviewAudioWithGemini(
     )
     .join("\n");
 
-  const prompt = `表示本文: ${input.displayText}
+  const assumedMode =
+    input.unknownTokens !== null && input.unknownTokens.length > 0;
+
+  const prompt = assumedMode
+    ? `表示本文: ${input.displayText}
+期待読み: (未確定)
+辞書未登録の語: ${input.unknownTokens!.join(", ")}
+音声生成用テキスト: ${input.synthesisText || "(なし)"}
+STT転写結果: ${input.sttTranscript}
+
+期待読みは確定していません。辞書未登録の語については、日本のIT分野で慣用的な日本語読みを想定してください。
+音声を聴いて、読み上げがその慣用読みとして適切か判定してください。
+以下のJSON形式で回答してください:
+{
+  "verdict": "match" | "mismatch" | "inconclusive",
+  "heardReading": string | null,
+  "reason": string (300文字以内),
+  "startSec": number | null,
+  "endSec": number | null
+}`
+    : `表示本文: ${input.displayText}
 期待読み: ${input.expectedReading}
 音声生成用テキスト: ${input.synthesisText || "(なし)"}
 STT転写結果: ${input.sttTranscript}
 候補差分:
 ${editsDescription || "(差分なし)"}
 
-音声を聞いて、期待読みと実際の発音が一致するか判定してください。
+音声を聴いて、期待読みと実際の発音が一致するか判定してください。
 以下のJSON形式で回答してください:
 {
   "verdict": "match" | "mismatch" | "inconclusive",
@@ -125,7 +154,9 @@ ${editsDescription || "(差分なし)"}
           },
         ],
         config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+          systemInstruction: assumedMode
+            ? ASSUMED_READING_SYSTEM_INSTRUCTION
+            : SYSTEM_INSTRUCTION,
           responseMimeType: "application/json",
           responseSchema,
         },

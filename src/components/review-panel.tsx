@@ -37,6 +37,10 @@ const RESOLUTION_LABELS: Record<HumanResolution, string> = {
   dismissed_issue: "誤検知として棄却",
 };
 
+// Gemini timestamps and MP3 seeking are both approximate, so start playback
+// slightly before the reported position to keep the problem audible.
+const SEEK_LEAD_IN_SEC = 0.5;
+
 function SeekButton({
   issue,
   onSeekAndPlay,
@@ -48,7 +52,9 @@ function SeekButton({
   return (
     <button
       type="button"
-      onClick={() => onSeekAndPlay(issue.startSec!)}
+      onClick={() =>
+        onSeekAndPlay(Math.max(0, issue.startSec! - SEEK_LEAD_IN_SEC))
+      }
       className="btn btn-small btn-seek"
     >
       問題位置から再生
@@ -109,7 +115,10 @@ export function ReviewPanel({
     prevReviewingRef.current = isReviewing;
   }, [isReviewing, review]);
 
-  const primaryIssue = review ? selectPrimaryIssue(review) : null;
+  // Hide the issue summary for pass results: leftover stage issues (e.g.
+  // an undefined-reading note from Stage 1) would only add noise there.
+  const primaryIssue =
+    review && review.status !== "pass" ? selectPrimaryIssue(review) : null;
   const busy = isReviewing || isQueued;
   // The jump buttons always move to another unit, so they are useless when
   // the current unit is the only actionable one.

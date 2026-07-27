@@ -57,7 +57,7 @@ describe("reviewSynthesisText", () => {
 
   it("returns inconclusive for undefined canonical reading", async () => {
     const unit = createUnit({
-      displayText: "UNKNOWN製品",
+      displayText: "Unknown製品",
       synthesisText: "アンノウン製品",
     });
 
