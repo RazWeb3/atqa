@@ -122,6 +122,20 @@ export const UNIT_STATUS_LABELS: Record<UnitDisplayStatus, string> = {
   inconclusive: "判定不能",
 };
 
+// Japanese labels for issue codes, shared by the review panel and the
+// status summary breakdown.
+export const ISSUE_CODE_LABELS: Record<string, string> = {
+  SYNTHESIS_TEXT_MISMATCH: "原稿読みの不一致",
+  AUDIO_PRONUNCIATION_SUSPECT: "発音の疑い",
+  OMISSION_SUSPECT: "読み飛ばしの疑い",
+  DUPLICATION_SUSPECT: "重複読みの疑い",
+  UNDEFINED_READING: "読み未定義の語",
+  LOW_ASR_CONFIDENCE: "音声認識の信頼度低",
+  ASR_GEMINI_CONFLICT: "判定根拠の不一致",
+  AUDIO_FETCH_FAILED: "音声取得の失敗",
+  MODEL_OUTPUT_INVALID: "モデル出力の不正",
+};
+
 export function deriveUnitStatus(
   runState: UnitRunState | undefined,
   review: ReviewResponse | undefined,
@@ -139,4 +153,22 @@ export function isActionable(
 ): boolean {
   if (resolution) return false;
   return status === "review" || status === "inconclusive" || status === "failed";
+}
+
+// Find the index of the next/previous actionable unit relative to
+// `fromIndex`, wrapping around the list. The current index itself is
+// excluded so repeated jumps always move. Returns null when no other
+// actionable unit exists.
+export function findAdjacentActionable(
+  actionableFlags: boolean[],
+  fromIndex: number,
+  direction: 1 | -1,
+): number | null {
+  const total = actionableFlags.length;
+  if (total === 0) return null;
+  for (let step = 1; step < total; step++) {
+    const index = (fromIndex + direction * step + total * step) % total;
+    if (actionableFlags[index]) return index;
+  }
+  return null;
 }

@@ -6,7 +6,10 @@ import type {
   ReviewResponse,
 } from "@/features/review/review-contract";
 import { selectPrimaryIssue } from "@/features/review/primary-issue";
-import type { HumanResolution } from "@/features/review/review-queue";
+import {
+  ISSUE_CODE_LABELS,
+  type HumanResolution,
+} from "@/features/review/review-queue";
 
 type ReviewPanelProps = {
   review: ReviewResponse | undefined;
@@ -14,6 +17,10 @@ type ReviewPanelProps = {
   isQueued: boolean;
   failed: boolean;
   resolution: HumanResolution | null;
+  // Triage navigation across units that still need human attention.
+  actionableCount: number;
+  actionableRank: number | null;
+  onJumpActionable: (direction: 1 | -1) => void;
   onReview: () => void;
   onSeekAndPlay: (seconds: number) => void;
   onResolve: (resolution: HumanResolution) => void;
@@ -23,18 +30,6 @@ const STATUS_LABELS: Record<string, string> = {
   pass: "正常",
   review: "要確認",
   inconclusive: "判定不能",
-};
-
-const ISSUE_CODE_LABELS: Record<string, string> = {
-  SYNTHESIS_TEXT_MISMATCH: "原稿読みの不一致",
-  AUDIO_PRONUNCIATION_SUSPECT: "発音の疑い",
-  OMISSION_SUSPECT: "読み飛ばしの疑い",
-  DUPLICATION_SUSPECT: "重複読みの疑い",
-  UNDEFINED_READING: "読み未定義の語",
-  LOW_ASR_CONFIDENCE: "音声認識の信頼度低",
-  ASR_GEMINI_CONFLICT: "判定根拠の不一致",
-  AUDIO_FETCH_FAILED: "音声取得の失敗",
-  MODEL_OUTPUT_INVALID: "モデル出力の不正",
 };
 
 const RESOLUTION_LABELS: Record<HumanResolution, string> = {
@@ -96,6 +91,9 @@ export function ReviewPanel({
   isQueued,
   failed,
   resolution,
+  actionableCount,
+  actionableRank,
+  onJumpActionable,
   onReview,
   onSeekAndPlay,
   onResolve,
@@ -113,10 +111,45 @@ export function ReviewPanel({
 
   const primaryIssue = review ? selectPrimaryIssue(review) : null;
   const busy = isReviewing || isQueued;
+  // The jump buttons always move to another unit, so they are useless when
+  // the current unit is the only actionable one.
+  const canJump =
+    actionableCount > (actionableRank !== null ? 1 : 0);
 
   return (
     <aside className="workspace-review" aria-label="AI検査パネル">
       <h3>AI検査</h3>
+
+      {actionableCount > 0 && (
+        <div className="triage-nav" data-testid="triage-nav">
+          <span className="triage-count" data-testid="triage-count">
+            {actionableRank !== null
+              ? `要対応 ${actionableRank} / ${actionableCount}件`
+              : `要対応 ${actionableCount}件`}
+          </span>
+          <div className="triage-buttons">
+            <button
+              type="button"
+              onClick={() => onJumpActionable(-1)}
+              disabled={!canJump}
+              className="btn btn-secondary btn-small"
+              data-testid="prev-actionable"
+            >
+              前の要対応
+            </button>
+            <button
+              type="button"
+              onClick={() => onJumpActionable(1)}
+              disabled={!canJump}
+              className="btn btn-secondary btn-small"
+              data-testid="next-actionable"
+            >
+              次の要対応
+            </button>
+          </div>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={onReview}

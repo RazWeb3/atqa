@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveUnitStatus,
+  findAdjacentActionable,
   initialReviewQueueState,
   isActionable,
   reviewQueueReducer,
@@ -144,5 +145,36 @@ describe("isActionable", () => {
   it("clears the flag once a human judgment is recorded", () => {
     expect(isActionable("review", "confirmed_issue")).toBe(false);
     expect(isActionable("review", "dismissed_issue")).toBe(false);
+  });
+});
+
+describe("findAdjacentActionable", () => {
+  //            0      1     2      3     4
+  const flags = [false, true, false, true, false];
+
+  it("finds the next actionable unit going forward", () => {
+    expect(findAdjacentActionable(flags, 0, 1)).toBe(1);
+    expect(findAdjacentActionable(flags, 1, 1)).toBe(3);
+  });
+
+  it("finds the previous actionable unit going backward", () => {
+    expect(findAdjacentActionable(flags, 3, -1)).toBe(1);
+    expect(findAdjacentActionable(flags, 4, -1)).toBe(3);
+  });
+
+  it("wraps around the list in both directions", () => {
+    expect(findAdjacentActionable(flags, 4, 1)).toBe(1);
+    expect(findAdjacentActionable(flags, 0, -1)).toBe(3);
+  });
+
+  it("excludes the current index so repeated jumps always move", () => {
+    const single = [false, true, false];
+    expect(findAdjacentActionable(single, 1, 1)).toBeNull();
+    expect(findAdjacentActionable(single, 1, -1)).toBeNull();
+  });
+
+  it("returns null when nothing is actionable", () => {
+    expect(findAdjacentActionable([false, false], 0, 1)).toBeNull();
+    expect(findAdjacentActionable([], 0, 1)).toBeNull();
   });
 });

@@ -36,6 +36,9 @@ describe("ReviewPanel", () => {
     isQueued: false,
     failed: false,
     resolution: null,
+    actionableCount: 0,
+    actionableRank: null as number | null,
+    onJumpActionable: vi.fn(),
     onReview: vi.fn(),
     onSeekAndPlay: vi.fn(),
     onResolve: vi.fn(),
@@ -312,5 +315,67 @@ describe("ReviewPanel", () => {
     expect(container.textContent).not.toContain("スコア");
     expect(container.textContent).not.toContain("score");
     expect(container.textContent).not.toContain("品質");
+  });
+
+  it("hides the triage nav when nothing is actionable", () => {
+    render(<ReviewPanel {...defaultProps} actionableCount={0} />);
+    expect(screen.queryByTestId("triage-nav")).not.toBeInTheDocument();
+  });
+
+  it("shows the actionable count and rank of the selected unit", () => {
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        actionableCount={15}
+        actionableRank={3}
+      />,
+    );
+    expect(screen.getByTestId("triage-count")).toHaveTextContent(
+      "要対応 3 / 15件",
+    );
+  });
+
+  it("shows only the count when the selected unit is not actionable", () => {
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        actionableCount={15}
+        actionableRank={null}
+      />,
+    );
+    expect(screen.getByTestId("triage-count")).toHaveTextContent(
+      "要対応 15件",
+    );
+  });
+
+  it("calls onJumpActionable with the direction", async () => {
+    const user = userEvent.setup();
+    const onJumpActionable = vi.fn();
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        actionableCount={15}
+        actionableRank={3}
+        onJumpActionable={onJumpActionable}
+      />,
+    );
+
+    await user.click(screen.getByTestId("next-actionable"));
+    expect(onJumpActionable).toHaveBeenCalledWith(1);
+
+    await user.click(screen.getByTestId("prev-actionable"));
+    expect(onJumpActionable).toHaveBeenCalledWith(-1);
+  });
+
+  it("disables jump buttons when the selected unit is the only actionable one", () => {
+    render(
+      <ReviewPanel
+        {...defaultProps}
+        actionableCount={1}
+        actionableRank={1}
+      />,
+    );
+    expect(screen.getByTestId("next-actionable")).toBeDisabled();
+    expect(screen.getByTestId("prev-actionable")).toBeDisabled();
   });
 });

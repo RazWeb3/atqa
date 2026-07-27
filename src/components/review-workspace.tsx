@@ -8,6 +8,7 @@ import type {
 import type { ReviewResponse } from "@/features/review/review-contract";
 import {
   deriveUnitStatus,
+  findAdjacentActionable,
   initialReviewQueueState,
   isActionable,
   reviewQueueReducer,
@@ -174,6 +175,40 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
     return map;
   }, [units, statusByUnitId, humanResolutions]);
 
+  // Triage navigation: jump between units that still need human attention.
+  const actionableFlags = useMemo(
+    () => units.map((unit) => actionableByUnitId[unit.id]),
+    [units, actionableByUnitId],
+  );
+
+  const actionableCount = useMemo(
+    () => actionableFlags.filter(Boolean).length,
+    [actionableFlags],
+  );
+
+  // 1-based position of the selected unit among actionable ones, or null
+  // when the selected unit itself is not actionable.
+  const actionableRank = useMemo(() => {
+    if (!actionableFlags[player.state.unitIndex]) return null;
+    let rank = 0;
+    for (let i = 0; i <= player.state.unitIndex; i++) {
+      if (actionableFlags[i]) rank++;
+    }
+    return rank;
+  }, [actionableFlags, player.state.unitIndex]);
+
+  const handleJumpActionable = useCallback(
+    (direction: 1 | -1) => {
+      const target = findAdjacentActionable(
+        actionableFlags,
+        player.state.unitIndex,
+        direction,
+      );
+      if (target !== null) player.select(target);
+    },
+    [actionableFlags, player],
+  );
+
   const currentReview = selectedUnit ? reviews[selectedUnit.id] : undefined;
   const currentRunState = selectedUnit
     ? queueState.runStates[selectedUnit.id]
@@ -284,6 +319,9 @@ export function ReviewWorkspace({ content, onReset }: ReviewWorkspaceProps) {
           isQueued={currentRunState === "queued"}
           failed={currentRunState === "failed"}
           resolution={currentResolution}
+          actionableCount={actionableCount}
+          actionableRank={actionableRank}
+          onJumpActionable={handleJumpActionable}
           onReview={handleReviewSelected}
           onSeekAndPlay={player.seekAndPlay}
           onResolve={handleResolve}
