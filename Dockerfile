@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
@@ -36,6 +36,10 @@ COPY --from=builder /app/public ./public
 # Copy standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# kuromoji dictionary files are loaded at runtime via fs and are not
+# traced into the standalone output, so copy them explicitly
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/kuromoji/dict ./node_modules/kuromoji/dict
 
 USER nextjs
 
