@@ -49,7 +49,7 @@ pnpm install
 ```bash
 export GOOGLE_CLOUD_PROJECT=your-project-id
 export GOOGLE_CLOUD_LOCATION=us-central1
-export GEMINI_MODEL=gemini-2.0-flash
+export GEMINI_MODEL=gemini-2.5-flash
 export ALLOWED_AUDIO_HOSTS=cdn.convly.jp
 export ASR_CONFIDENCE_THRESHOLD=0.75
 ```
